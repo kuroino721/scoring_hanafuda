@@ -112,27 +112,22 @@ class KoikoiState extends State<KoikoiPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            _scoreOfPlayer1(),
+            Transform.rotate(
+              angle: math.pi,
+              child: _scoreOfPlayer(1),
+            ),
             _centerBar(),
-            _scoreOfPlayer2(),
+            _scoreOfPlayer(2),
           ],
         ),
       ),
     );
   }
 
-  _scoreOfPlayer1() {
+  _scoreOfPlayer(int numOfPlayer) {
     return Container(
       child: Center(
-        child: new Text(score[0].toString()),
-      ),
-    );
-  }
-
-  _scoreOfPlayer2() {
-    return Container(
-      child: Center(
-        child: new Text(score[1].toString()),
+        child: new Text(score[numOfPlayer - 1].toString()),
       ),
     );
   }
