@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
         ),
         home: HomePage(title: 'Scoring Hanafuda'),
         routes: <String, WidgetBuilder>{
-          '/home': (BuildContext context) => new HomePage(),
+          '/home': (BuildContext context) => new HomePage(title: 'Scoring Hanafuda'),
           '/koikoi': (BuildContext context) => new KoikoiPage(),
 //        '/hachihachi': (BuildContext context) => new HachihachiPage(),
         });
@@ -210,10 +210,12 @@ class KoikoiState extends State<KoikoiPage> {
   void _finishGame() {
     _showConfirm(title: 'ゲーム終了', body: '終了しますか？').then((result) {
       if (result) {
-        Navigator.pushAndRemoveUntil(
-            context,
-            new MaterialPageRoute(builder: (context) => new HomePage()),
-            (_) => false);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              settings: RouteSettings(name: "/home"),
+              builder: (BuildContext context) => HomePage(title: 'ScoringHanafuda')),
+        );
       }
     });
   }
