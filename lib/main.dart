@@ -14,6 +14,7 @@ class MyApp extends StatelessWidget {
         ),
         home: HomePage(title: 'Scoring Hanafuda'),
         routes: <String, WidgetBuilder>{
+          '/home': (BuildContext context) => new HomePage(),
           '/koikoi': (BuildContext context) => new KoikoiPage(),
 //        '/hachihachi': (BuildContext context) => new HachihachiPage(),
         });
@@ -35,11 +36,11 @@ class HomePage extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             RaisedButton(
-              onPressed: () => Navigator.of(context).pushNamed("/koikoi"),
+              onPressed: () => Navigator.pushNamed(context, "/koikoi"),
               child: new Text('こいこい'),
             ),
             RaisedButton(
-              onPressed: () => Navigator.of(context).pushNamed("/hachihachi"),
+              onPressed: () => Navigator.pushNamed(context, "/hachihachi"),
               child: new Text('はちはち'),
             ),
           ],
@@ -57,29 +58,134 @@ class KoikoiPage extends StatefulWidget {
 class KoikoiState extends State<KoikoiPage> {
   final String title = 'Scoring Koikoi';
   List<int> score = new List.filled(2, 0);
+  List<int> totalScoreOfPlayer = new List.filled(2, 0);
   int month = 1;
 
-  void incrementScore(int numOfPlayer) {
-    setState(() {
-      score[numOfPlayer]++;
-    });
+  //プレイヤー名
+  _nameOfPlayer(int numOfPlayer) {
+    return Container(
+      child: Center(
+        child: new TextField(
+          decoration: InputDecoration(
+              border: InputBorder.none, hintText: 'Player$numOfPlayer'),
+        ),
+      ),
+    );
   }
 
-  void decrementScore(int numOfPlayer) {
-    setState(() {
-      score[numOfPlayer]--;
-    });
+  //プレイヤーの得点
+  _scoreOfPlayer(int numOfPlayer) {
+    return Container(
+      child: Center(
+        child: new Text(score[numOfPlayer - 1].toString()),
+      ),
+    );
   }
 
-  void incrementMonth() {
+  //プレイヤーの得点初期化
+  void _initializeScores() {
     setState(() {
-      month++;
-      if (month > 12) {
-        month %= 12;
+      for (int i = 0; i < this.score.length; i++) {
+        score[i] = 0;
       }
     });
   }
 
+  //点数++
+  void _incrementScore(int numOfPlayer) {
+    setState(() {
+      score[numOfPlayer - 1]++;
+    });
+  }
+
+  //点数--
+  void _decrementScore(int numOfPlayer) {
+    setState(() {
+      score[numOfPlayer - 1]--;
+    });
+  }
+
+  //+-ボタン
+  _buttonToScore(int numOfPlayer) {
+    return Container(
+      child: Row(
+        children: <Widget>[
+          RaisedButton(
+            onPressed: () => _incrementScore(numOfPlayer),
+            child: new Text('+'),
+          ),
+          RaisedButton(
+            onPressed: () => _decrementScore(numOfPlayer),
+            child: new Text('-'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  //累計得点の表示
+  _showTotalScoreOfPlayer(int numOfPlayer) {
+    return Container(
+      child: new Text('total: ${totalScoreOfPlayer[numOfPlayer - 1]}'),
+    );
+  }
+
+  //月++
+  void _incrementMonth() {
+    setState(() {
+      this.month++;
+      if (this.month > 12) {
+        this.month %= 12;
+      }
+    });
+  }
+
+  //月の表示
+  _showMonth(int month) {
+    return Container(
+      child: new Text('$month月'),
+    );
+  }
+
+  //確認画面表示
+  Future _showConfirm({String title, String body}) async {
+    bool result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => new AlertDialog(
+        title: new Text(title),
+        content: Center(
+          child: new Text(body),
+        ),
+        actions: <Widget>[
+          FlatButton(
+            child: Text("Cancel"),
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          FlatButton(
+            child: Text("OK"),
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+      ),
+    );
+    if (result) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  //再戦
+  void _goToNextRound() {
+    _showConfirm(title: '再戦', body: '再戦しますか？').then((result) {
+      if (result) {
+        _incrementMonth();
+        _initializeScores();
+      }
+    });
+  }
+
+  //月の雑学の表示
   Future _showTriviaOfMonth() async {
     await showDialog(
       context: context,
@@ -91,17 +197,49 @@ class KoikoiState extends State<KoikoiPage> {
               child: new Text(TriviaOfMonth.getTrivia(month))),
         ),
         actions: <Widget>[
-          new SimpleDialogOption(
-            child: new Text('なるほど'),
-            onPressed: () {
-              Navigator.pop(context);
-            },
+          FlatButton(
+            child: Text("なるほど"),
+            onPressed: () => Navigator.pop(context),
           ),
         ],
       ),
     );
   }
 
+  //終了
+  void _finishGame() {
+    _showConfirm(title: 'ゲーム終了', body: '終了しますか？').then((result) {
+      if (result) {
+        Navigator.pushAndRemoveUntil(
+            context,
+            new MaterialPageRoute(builder: (context) => new HomePage()),
+            (_) => false);
+      }
+    });
+  }
+
+  //中央のバー
+  _centerBar() {
+    return ButtonBar(
+      alignment: MainAxisAlignment.center,
+      children: <Widget>[
+        RaisedButton(
+          onPressed: _goToNextRound,
+          child: new Text('再戦'),
+        ),
+        RaisedButton(
+          onPressed: _showTriviaOfMonth,
+          child: new Text('$month月といえば'),
+        ),
+        RaisedButton(
+          onPressed: _finishGame,
+          child: new Text('終了'),
+        ),
+      ],
+    );
+  }
+
+  //ルートレイアウト
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
@@ -117,42 +255,16 @@ class KoikoiState extends State<KoikoiPage> {
               child: _scoreOfPlayer(1),
             ),
             _centerBar(),
+            _nameOfPlayer(2),
             _scoreOfPlayer(2),
           ],
         ),
       ),
     );
   }
-
-  _scoreOfPlayer(int numOfPlayer) {
-    return Container(
-      child: Center(
-        child: new Text(score[numOfPlayer - 1].toString()),
-      ),
-    );
-  }
-
-  _centerBar() {
-    return ButtonBar(
-      alignment: MainAxisAlignment.center,
-      children: <Widget>[
-        RaisedButton(
-          onPressed: () => Navigator.of(context).pushNamed("/koikoi"),
-          child: new Text('再戦'),
-        ),
-        RaisedButton(
-          onPressed: _showTriviaOfMonth,
-          child: new Text('$month月といえば'),
-        ),
-        RaisedButton(
-          onPressed: () => Navigator.of(context).pushNamed("/hachihachi"),
-          child: new Text('終了'),
-        ),
-      ],
-    );
-  }
 }
 
+//月の雑学
 class TriviaOfMonth {
   static final List<String> triviaOfJanuary = [
     "1月は花札で言うと「松に鶴」です。\n"
