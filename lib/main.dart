@@ -14,7 +14,8 @@ class MyApp extends StatelessWidget {
         ),
         home: HomePage(title: 'Scoring Hanafuda'),
         routes: <String, WidgetBuilder>{
-          '/home': (BuildContext context) => new HomePage(title: 'Scoring Hanafuda'),
+          '/home': (BuildContext context) =>
+              new HomePage(title: 'Scoring Hanafuda'),
           '/koikoi': (BuildContext context) => new KoikoiPage(),
 //        '/hachihachi': (BuildContext context) => new HachihachiPage(),
         });
@@ -22,8 +23,8 @@ class MyApp extends StatelessWidget {
 }
 
 class HomePage extends StatelessWidget {
+  HomePage({Key key, this.title}) : super(key: key);
   final String title;
-  HomePage({this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +41,8 @@ class HomePage extends StatelessWidget {
               child: new Text('こいこい'),
             ),
             RaisedButton(
-              onPressed: () => Navigator.pushNamed(context, "/hachihachi"),
+//              onPressed: () => Navigator.pushNamed(context, "/hachihachi"),
+              onPressed: null,
               child: new Text('はちはち'),
             ),
           ],
@@ -57,28 +59,27 @@ class KoikoiPage extends StatefulWidget {
 
 class KoikoiState extends State<KoikoiPage> {
   final String title = 'Scoring Koikoi';
+  List<String> nameOfPlayer = ['player1', 'player2'];
   List<int> score = new List.filled(2, 0);
   List<int> totalScoreOfPlayer = new List.filled(2, 0);
   int month = 1;
 
   //プレイヤー名
-  _nameOfPlayer(int numOfPlayer) {
+  _showNameOfPlayer(int numOfPlayer) {
     return Container(
-      child: Center(
-        child: new TextField(
-          decoration: InputDecoration(
-              border: InputBorder.none, hintText: 'Player$numOfPlayer'),
-        ),
-      ),
-    );
-  }
-
-  //プレイヤーの得点
-  _scoreOfPlayer(int numOfPlayer) {
-    return Container(
-      child: Center(
-        child: new Text(score[numOfPlayer - 1].toString()),
-      ),
+      width: 200.0,
+      child: new TextField(
+          textAlign: TextAlign.center,
+          decoration: InputDecoration.collapsed(
+            hintText: '${nameOfPlayer[numOfPlayer - 1]}',
+          ),
+          onChanged: (text) {
+            if (text.length > 0) {
+              setState(() {
+                this.nameOfPlayer[numOfPlayer - 1] = text;
+              });
+            }
+          }),
     );
   }
 
@@ -109,16 +110,31 @@ class KoikoiState extends State<KoikoiPage> {
   _buttonToScore(int numOfPlayer) {
     return Container(
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
-          RaisedButton(
+          IconButton(
             onPressed: () => _incrementScore(numOfPlayer),
-            child: new Text('+'),
+            iconSize: 50,
+            color: Colors.green,
+            icon: Icon(Icons.add_circle),
           ),
-          RaisedButton(
+          IconButton(
             onPressed: () => _decrementScore(numOfPlayer),
-            child: new Text('-'),
+            iconSize: 50,
+            color: Colors.green,
+            icon: Icon(Icons.remove_circle),
           ),
         ],
+      ),
+    );
+  }
+
+  //得点の表示
+  _showScoreOfPlayer(int numOfPlayer) {
+    return Container(
+      child: new Text(
+        score[numOfPlayer - 1].toString(),
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 100),
       ),
     );
   }
@@ -126,7 +142,7 @@ class KoikoiState extends State<KoikoiPage> {
   //累計得点の表示
   _showTotalScoreOfPlayer(int numOfPlayer) {
     return Container(
-      child: new Text('total: ${totalScoreOfPlayer[numOfPlayer - 1]}'),
+      child: new Text('total: ${this.totalScoreOfPlayer[numOfPlayer - 1]}'),
     );
   }
 
@@ -141,11 +157,43 @@ class KoikoiState extends State<KoikoiPage> {
   }
 
   //月の表示
-  _showMonth(int month) {
+  _showMonth() {
     return Container(
-      child: new Text('$month月'),
+      child: new Text('${this.month}月'),
     );
   }
+
+  //累計得点、得点、月を1行に表示
+  _showInfoOfPlayer(int numOfPlayer) {
+    return Container(
+        child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: <Widget>[
+        Transform.rotate(
+          angle: -math.pi / 2,
+          child: _showTotalScoreOfPlayer(numOfPlayer),
+        ),
+        _showScoreOfPlayer(numOfPlayer),
+        Transform.rotate(
+          angle: math.pi / 2,
+          child: _showMonth(),
+        ),
+      ],
+    ));
+  }
+
+//  //プレイヤーの場の全て
+//  _showFieldOfPlayer(int numOfPlayer) {
+//    return Container(
+//      child: Column(
+//        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//        children: <Widget>[
+//          _showInfoOfPlayer(numOfPlayer),
+//          _buttonToScore(numOfPlayer)
+//        ],
+//      ),
+//    );
+//  }
 
   //確認画面表示
   Future _showConfirm({String title, String body}) async {
@@ -168,17 +216,16 @@ class KoikoiState extends State<KoikoiPage> {
         ],
       ),
     );
-    if (result) {
-      return true;
-    } else {
-      return false;
-    }
+    return result;
   }
 
   //再戦
   void _goToNextRound() {
     _showConfirm(title: '再戦', body: '再戦しますか？').then((result) {
       if (result) {
+        for (int i = 0; i < totalScoreOfPlayer.length; i++) {
+          totalScoreOfPlayer[i] += score[i];
+        }
         _incrementMonth();
         _initializeScores();
       }
@@ -206,16 +253,49 @@ class KoikoiState extends State<KoikoiPage> {
     );
   }
 
+  //勝敗ダイアログ
+  Future _showResultOfGame() async {
+    String textOfScore, textOfResult;
+    textOfScore = "${nameOfPlayer[0]}さん: ${totalScoreOfPlayer[0]}文\n"
+        "${nameOfPlayer[1]}さん: ${totalScoreOfPlayer[1]}文\n";
+    if (totalScoreOfPlayer[0] > totalScoreOfPlayer[1]) {
+      textOfResult = "${nameOfPlayer[0]}さんの勝ちです！おみごと！";
+    } else if (totalScoreOfPlayer[0] < totalScoreOfPlayer[1]) {
+      textOfResult = "${nameOfPlayer[1]}さんの勝ちです！あっぱれ！";
+    } else {
+      textOfResult = "引き分けです！良い勝負でしたね！";
+    }
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) => new AlertDialog(
+        title: new Text('結果'),
+        content: Center(
+          child: new Text(textOfScore + textOfResult),
+        ),
+        actions: <Widget>[
+          FlatButton(
+            child: Text("OK"),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  settings: RouteSettings(name: "/home"),
+                  builder: (BuildContext context) =>
+                      HomePage(title: 'ScoringHanafuda')),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   //終了
   void _finishGame() {
     _showConfirm(title: 'ゲーム終了', body: '終了しますか？').then((result) {
       if (result) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-              settings: RouteSettings(name: "/home"),
-              builder: (BuildContext context) => HomePage(title: 'ScoringHanafuda')),
-        );
+        for (int i = 0; i < totalScoreOfPlayer.length; i++) {
+          totalScoreOfPlayer[i] += score[i];
+        }
+        _showResultOfGame();
       }
     });
   }
@@ -241,7 +321,7 @@ class KoikoiState extends State<KoikoiPage> {
     );
   }
 
-  //ルートレイアウト
+  //全体のレイアウト
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
@@ -250,15 +330,24 @@ class KoikoiState extends State<KoikoiPage> {
       ),
       body: Container(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             Transform.rotate(
               angle: math.pi,
-              child: _scoreOfPlayer(1),
+              child: _buttonToScore(1),
+            ),
+            Transform.rotate(
+              angle: math.pi,
+              child: _showInfoOfPlayer(1),
+            ),
+            Transform.rotate(
+              angle: math.pi,
+              child: _showNameOfPlayer(1),
             ),
             _centerBar(),
-            _nameOfPlayer(2),
-            _scoreOfPlayer(2),
+            _showNameOfPlayer(2),
+            _showInfoOfPlayer(2),
+            _buttonToScore(2)
           ],
         ),
       ),
