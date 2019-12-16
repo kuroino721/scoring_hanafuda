@@ -166,34 +166,22 @@ class KoikoiState extends State<KoikoiPage> {
   //累計得点、得点、月を1行に表示
   _showInfoOfPlayer(int numOfPlayer) {
     return Container(
-        child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: <Widget>[
-        Transform.rotate(
-          angle: -math.pi / 2,
-          child: _showTotalScoreOfPlayer(numOfPlayer),
-        ),
-        _showScoreOfPlayer(numOfPlayer),
-        Transform.rotate(
-          angle: math.pi / 2,
-          child: _showMonth(),
-        ),
-      ],
-    ));
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: <Widget>[
+          Transform.rotate(
+            angle: -math.pi / 2,
+            child: _showTotalScoreOfPlayer(numOfPlayer),
+          ),
+          _showScoreOfPlayer(numOfPlayer),
+          Transform.rotate(
+            angle: math.pi / 2,
+            child: _showMonth(),
+          ),
+        ],
+      ),
+    );
   }
-
-//  //プレイヤーの場の全て
-//  _showFieldOfPlayer(int numOfPlayer) {
-//    return Container(
-//      child: Column(
-//        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//        children: <Widget>[
-//          _showInfoOfPlayer(numOfPlayer),
-//          _buttonToScore(numOfPlayer)
-//        ],
-//      ),
-//    );
-//  }
 
   //確認画面表示
   Future _showConfirm({String title, String body}) async {
