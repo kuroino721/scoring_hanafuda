@@ -169,13 +169,15 @@ class KoikoiState extends State<KoikoiPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
-          Transform.rotate(
-            angle: -math.pi / 2,
+          RotatedBox(
+            quarterTurns: 3,
             child: _showTotalScoreOfPlayer(numOfPlayer),
           ),
-          _showScoreOfPlayer(numOfPlayer),
-          Transform.rotate(
-            angle: math.pi / 2,
+          Center(
+            child: _showScoreOfPlayer(numOfPlayer),
+          ),
+          RotatedBox(
+            quarterTurns: 1,
             child: _showMonth(),
           ),
         ],
@@ -309,6 +311,20 @@ class KoikoiState extends State<KoikoiPage> {
     );
   }
 
+  //Player1人分の情報全て
+  _showFieldOfPlayer(int numOfPlayer) {
+    return Container(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          _showNameOfPlayer(numOfPlayer),
+          _showInfoOfPlayer(numOfPlayer),
+          _buttonToScore(numOfPlayer),
+        ],
+      ),
+    );
+  }
+
   //全体のレイアウト
   @override
   Widget build(BuildContext context) {
@@ -318,24 +334,14 @@ class KoikoiState extends State<KoikoiPage> {
       ),
       body: Container(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             Transform.rotate(
               angle: math.pi,
-              child: _buttonToScore(1),
-            ),
-            Transform.rotate(
-              angle: math.pi,
-              child: _showInfoOfPlayer(1),
-            ),
-            Transform.rotate(
-              angle: math.pi,
-              child: _showNameOfPlayer(1),
+              child: _showFieldOfPlayer(1),
             ),
             _centerBar(),
-            _showNameOfPlayer(2),
-            _showInfoOfPlayer(2),
-            _buttonToScore(2)
+            _showFieldOfPlayer(2),
           ],
         ),
       ),
