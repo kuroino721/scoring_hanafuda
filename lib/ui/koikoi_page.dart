@@ -15,7 +15,7 @@ class KoikoiState extends State<KoikoiPage> {
   List<int> totalScoreOfPlayer = new List.filled(2, 0);
   int month = 1;
 
-  //プレイヤー名
+  /// プレイヤー名表示（編集可能）
   _showNameOfPlayer(int numOfPlayer) {
     return Container(
       width: 200.0,
@@ -34,7 +34,7 @@ class KoikoiState extends State<KoikoiPage> {
     );
   }
 
-  //プレイヤーの得点初期化
+  /// プレイヤーの得点初期化
   void _initializeScores() {
     setState(() {
       for (int i = 0; i < this.score.length; i++) {
@@ -43,21 +43,21 @@ class KoikoiState extends State<KoikoiPage> {
     });
   }
 
-  //点数++
+  /// 点数++
   void _incrementScore(int numOfPlayer) {
     setState(() {
       score[numOfPlayer - 1]++;
     });
   }
 
-  //点数--
+  /// 点数--
   void _decrementScore(int numOfPlayer) {
     setState(() {
       score[numOfPlayer - 1]--;
     });
   }
 
-  //+-ボタン
+  /// +-ボタン
   _buttonToScore(int numOfPlayer) {
     return Container(
       child: Row(
@@ -80,7 +80,7 @@ class KoikoiState extends State<KoikoiPage> {
     );
   }
 
-  //得点の表示
+  /// 得点の表示
   _showScoreOfPlayer(int numOfPlayer) {
     return Container(
       child: new Text(
@@ -90,14 +90,14 @@ class KoikoiState extends State<KoikoiPage> {
     );
   }
 
-  //累計得点の表示
+  /// 累計得点の表示
   _showTotalScoreOfPlayer(int numOfPlayer) {
     return Container(
       child: new Text('total: ${this.totalScoreOfPlayer[numOfPlayer - 1]}'),
     );
   }
 
-  //月++
+  /// 月++
   void _incrementMonth() {
     setState(() {
       this.month++;
@@ -107,14 +107,14 @@ class KoikoiState extends State<KoikoiPage> {
     });
   }
 
-  //月の表示
+  /// 月の表示
   _showMonth() {
     return Container(
       child: new Text('${this.month}月'),
     );
   }
 
-  //累計得点、得点、月を1行に表示
+  /// 累計得点、得点、月を1行に表示
   _showInfoOfPlayer(int numOfPlayer) {
     return Container(
       child: Row(
@@ -136,7 +136,7 @@ class KoikoiState extends State<KoikoiPage> {
     );
   }
 
-  //確認画面表示
+  /// 確認画面表示
   Future _showConfirm({String title, String body}) async {
     bool result = await showDialog<bool>(
       context: context,
@@ -160,7 +160,7 @@ class KoikoiState extends State<KoikoiPage> {
     return result;
   }
 
-  //再戦
+  /// 再戦
   void _goToNextRound() {
     _showConfirm(title: '再戦', body: '再戦しますか？').then((result) {
       if (result) {
@@ -173,7 +173,7 @@ class KoikoiState extends State<KoikoiPage> {
     });
   }
 
-  //月の雑学の表示
+  /// 月の雑学の表示
   Future _showTriviaOfMonth() async {
     await showDialog(
       context: context,
@@ -194,7 +194,7 @@ class KoikoiState extends State<KoikoiPage> {
     );
   }
 
-  //勝敗ダイアログ
+  /// 勝敗ダイアログ
   Future _showResultOfGame() async {
     String textOfScore, textOfResult;
     textOfScore = "${nameOfPlayer[0]}さん: ${totalScoreOfPlayer[0]}文\n"
@@ -229,7 +229,7 @@ class KoikoiState extends State<KoikoiPage> {
     );
   }
 
-  //終了
+  /// 終了
   void _finishGame() {
     _showConfirm(title: 'ゲーム終了', body: '終了しますか？').then((result) {
       if (result) {
@@ -241,7 +241,7 @@ class KoikoiState extends State<KoikoiPage> {
     });
   }
 
-  //中央のバー
+  /// 中央のバー
   _centerBar() {
     return ButtonBar(
       alignment: MainAxisAlignment.center,
@@ -262,7 +262,7 @@ class KoikoiState extends State<KoikoiPage> {
     );
   }
 
-  //Player1人分の情報全て
+  /// Player1人分の情報全て
   _showFieldOfPlayer(int numOfPlayer) {
     return Container(
       child: Column(
@@ -276,7 +276,7 @@ class KoikoiState extends State<KoikoiPage> {
     );
   }
 
-  //全体のレイアウト
+  /// 全体のレイアウト
   @override
   Widget build(BuildContext context) {
     return new Scaffold(

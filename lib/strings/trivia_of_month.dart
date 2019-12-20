@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-//月の雑学
+/// 月の雑学
 class TriviaOfMonth {
   static final List<String> triviaOfJanuary = [
     "1月は花札で言うと「松に鶴」です。\n"
