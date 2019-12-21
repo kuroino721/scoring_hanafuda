@@ -15,6 +15,29 @@ class KoikoiState extends State<KoikoiPage> {
   List<int> totalScoreOfPlayer = new List.filled(2, 0);
   int month = 1;
 
+  /// 全体のレイアウト
+  @override
+  Widget build(BuildContext context) {
+    return new Scaffold(
+      appBar: new AppBar(
+        title: Text(title),
+      ),
+      body: Container(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            Transform.rotate(
+              angle: math.pi,
+              child: _showFieldOfPlayer(1),
+            ),
+            _centerBar(),
+            _showFieldOfPlayer(2),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// プレイヤー名表示（編集可能）
   _showNameOfPlayer(int numOfPlayer) {
     return Container(
@@ -272,29 +295,6 @@ class KoikoiState extends State<KoikoiPage> {
           _showInfoOfPlayer(numOfPlayer),
           _buttonToScore(numOfPlayer),
         ],
-      ),
-    );
-  }
-
-  /// 全体のレイアウト
-  @override
-  Widget build(BuildContext context) {
-    return new Scaffold(
-      appBar: new AppBar(
-        title: Text(title),
-      ),
-      body: Container(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            Transform.rotate(
-              angle: math.pi,
-              child: _showFieldOfPlayer(1),
-            ),
-            _centerBar(),
-            _showFieldOfPlayer(2),
-          ],
-        ),
       ),
     );
   }
