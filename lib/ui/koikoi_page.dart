@@ -108,7 +108,11 @@ class KoikoiState extends State<KoikoiPage> {
     return Container(
       child: new Text(
         score[numOfPlayer - 1].toString(),
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 100),
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 100,
+          fontFamily: 'monospace',
+        ),
       ),
     );
   }
@@ -116,7 +120,8 @@ class KoikoiState extends State<KoikoiPage> {
   /// 累計得点の表示
   _showTotalScoreOfPlayer(int numOfPlayer) {
     return Container(
-      child: new Text('total: ${this.totalScoreOfPlayer[numOfPlayer - 1]}'),
+      child: new Text('total: ${this.totalScoreOfPlayer[numOfPlayer - 1]}',
+          style: TextStyle(fontSize: 20)),
     );
   }
 
@@ -133,7 +138,7 @@ class KoikoiState extends State<KoikoiPage> {
   /// 月の表示
   _showMonth() {
     return Container(
-      child: new Text('${this.month}月'),
+      child: new Text('${this.month}月', style: TextStyle(fontSize: 20)),
     );
   }
 
@@ -164,9 +169,10 @@ class KoikoiState extends State<KoikoiPage> {
     bool result = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => new AlertDialog(
-        title: new Text(title),
-        content: Center(
-          child: new Text(body),
+        title: Text(title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[new Text(body)],
         ),
         actions: <Widget>[
           FlatButton(
@@ -233,8 +239,11 @@ class KoikoiState extends State<KoikoiPage> {
       context: context,
       builder: (BuildContext context) => new AlertDialog(
         title: new Text('結果'),
-        content: Center(
-          child: new Text(textOfScore + textOfResult),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            new Text(textOfScore + textOfResult),
+          ],
         ),
         actions: <Widget>[
           FlatButton(

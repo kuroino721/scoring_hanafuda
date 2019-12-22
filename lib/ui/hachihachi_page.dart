@@ -79,6 +79,7 @@ class HachihachiState extends State<HachihachiPage> {
       children: <Widget>[
         _showInfoOfPlayers(phase),
         _centerBar(),
+        _showTotalScores(),
       ],
     );
   }
@@ -136,8 +137,10 @@ class HachihachiState extends State<HachihachiPage> {
   _showTotalScores() {
     return Container(
       child: Column(
-        Text('Total Score\n'),
-        _showSortedTotalScores,
+        children: <Widget>[
+          Text('Total Score\n'),
+          _showSortedTotalScores(),
+        ],
       ),
     );
   }
@@ -149,9 +152,18 @@ class HachihachiState extends State<HachihachiPage> {
       players[2].name: players[2].totalScore,
     };
     totalScores.values.toList()..sort();
-    return Column(
-      Text()
-    )
+    return Container(
+      child: Table(
+        children: [
+          TableRow(
+            children: [
+              Text(totalScores.keys.toList().toString()),
+              Text(totalScores.values.toList().toString()),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   /// 月++

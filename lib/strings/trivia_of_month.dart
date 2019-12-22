@@ -145,6 +145,7 @@ class TriviaOfMonth {
     triviaOfMarch,
     triviaOfApril,
     triviaOfMay,
+    triviaOfJune,
     triviaOfJuly,
     triviaOfAugust,
     triviaOfSeptember,
@@ -154,8 +155,7 @@ class TriviaOfMonth {
   ];
 
   static String getTrivia(month) {
-    month--;
-    return triviaOfMonths[month]
-    [math.Random().nextInt(triviaOfMonths[month].length)];
+    return triviaOfMonths[month - 1]
+        [math.Random().nextInt(triviaOfMonths[month - 1].length)];
   }
 }
