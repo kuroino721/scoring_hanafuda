@@ -43,7 +43,6 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.hanafuda_project.scoring_hanafuda"
         minSdkVersion 16
         targetSdkVersion 28
@@ -63,8 +62,8 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
-
-            minifyEnabled false
+            shrinkResources true
+            minifyEnabled true
             useProguard true
 
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
