@@ -19,8 +19,7 @@ class HomePage extends StatelessWidget {
               child: new Text('こいこい'),
             ),
             RaisedButton(
-//              onPressed: () => Navigator.pushNamed(context, "/hachihachi"),
-              onPressed: null,
+              onPressed: () => Navigator.pushNamed(context, "/hachihachi"),
               child: new Text('はちはち'),
             ),
           ],

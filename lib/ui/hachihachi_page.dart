@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/strings/trivia_of_month.dart';
 import 'package:flutter_app/ui/home_page.dart';
-import 'package:sortedmap/sortedmap.dart';
 
-final List<String> phases = ['手役', '出来役', '出来役なし'];
+final List<String> nameOfPhases = ['手役', '出来役', '出来役なし'];
 
 class HachihachiPlayer {
   String name;
   HachihachiPlayer(this.name);
   var scoreOfRound = {
-    phases[0]: 0,
-    phases[1]: 0,
-    phases[2]: 0,
+    nameOfPhases[0]: 0,
+    nameOfPhases[1]: 0,
+    nameOfPhases[2]: 0,
   };
   var totalScore = 0;
 }
@@ -29,19 +28,21 @@ class Choice {
 }
 
 var choices = <Choice>[
-  Choice(title: phases[0]),
-  Choice(title: phases[1]),
-  Choice(title: phases[2]),
+  Choice(title: nameOfPhases[0]),
+  Choice(title: nameOfPhases[1]),
+  Choice(title: nameOfPhases[2]),
 ];
 
 class HachihachiState extends State<HachihachiPage> {
   final String title = 'Scoring Hachihachi';
   int month = 1;
-  var players = [
+  final players = [
     new HachihachiPlayer('player1'),
     new HachihachiPlayer('player2'),
     new HachihachiPlayer('player3')
   ];
+  int scoreMultiplier = 1; //得点の倍率
+  String _nameOfField = '小場';
 
   /// 全体のレイアウト
   @override
@@ -63,9 +64,9 @@ class HachihachiState extends State<HachihachiPage> {
           ),
           body: TabBarView(
             children: <Widget>[
-              _showInfoOfPhase(phases[0]),
-              _showInfoOfPhase(phases[1]),
-              _showInfoOfPhase(phases[2]),
+              _showInfoOfPhase(nameOfPhases[0]),
+              _showInfoOfPhase(nameOfPhases[1]),
+              _showInfoOfPhase(nameOfPhases[2]),
             ],
           ),
         ),
@@ -74,13 +75,42 @@ class HachihachiState extends State<HachihachiPage> {
   }
 
   _showInfoOfPhase(String phase) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: <Widget>[
-        _showInfoOfPlayers(phase),
-        _centerBar(),
-        _showTotalScores(),
-      ],
+    return Container(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: <Widget>[
+          _showInfoOfPlayers(phase),
+          _centerBar(),
+          _showLowerHalfView(),
+        ],
+      ),
+    );
+  }
+
+  /// 3人のプレイヤーの得点を1行に表示
+  _showInfoOfPlayers(String phase) {
+    return Container(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: <Widget>[
+          _showInfoOfPlayer(number: 1, phase: phase),
+          _showInfoOfPlayer(number: 2, phase: phase),
+          _showInfoOfPlayer(number: 3, phase: phase),
+        ],
+      ),
+    );
+  }
+
+  /// プレイヤー名、得点を1列に表示
+  _showInfoOfPlayer({int number, String phase}) {
+    return Container(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: <Widget>[
+          _showNameOfPlayer(number),
+          _showScoreOfPlayer(number: number, phase: phase),
+        ],
+      ),
     );
   }
 
@@ -106,19 +136,6 @@ class HachihachiState extends State<HachihachiPage> {
     );
   }
 
-  /// プレイヤーの得点初期化
-  void _initializeScores() {
-    setState(
-      () {
-        for (int i = 0; i < players.length; i++) {
-          for (int j = 0; j < phases.length; j++) {
-            players[i].scoreOfRound[phases[j]] = 0;
-          }
-        }
-      },
-    );
-  }
-
   /// 得点の表示
   _showScoreOfPlayer({int number, String phase}) {
     return Container(
@@ -128,42 +145,65 @@ class HachihachiState extends State<HachihachiPage> {
         decoration: InputDecoration.collapsed(
           hintText: players[number - 1].scoreOfRound[phase].toString(),
         ),
+        onChanged: (text) {
+          if (text.length > 0) {
+            setState(
+              () {
+                players[number - 1].scoreOfRound[phase] = int.parse(text);
+              },
+            );
+          }
+        },
         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 50),
       ),
     );
   }
 
-  /// 累計得点の表示
-  _showTotalScores() {
-    return Container(
-      child: Column(
-        children: <Widget>[
-          Text('Total Score\n'),
-          _showSortedTotalScores(),
-        ],
-      ),
+  /// 中央のバー
+  _centerBar() {
+    return ButtonBar(
+      alignment: MainAxisAlignment.spaceEvenly,
+      children: <Widget>[
+        RaisedButton(
+          onPressed: _goToNextRound,
+          child: new Text('再戦'),
+        ),
+        RaisedButton(
+          onPressed: _showTriviaOfMonth,
+          child: new Text('$month月といえば'),
+        ),
+        RaisedButton(
+          onPressed: _finishGame,
+          child: new Text('終了'),
+        ),
+      ],
     );
   }
 
-  _showSortedTotalScores() {
-    var totalScores = {
-      players[0].name: players[0].totalScore,
-      players[1].name: players[1].totalScore,
-      players[2].name: players[2].totalScore,
-    };
-    totalScores.values.toList()..sort();
-    return Container(
-      child: Table(
-        children: [
-          TableRow(
-            children: [
-              Text(totalScores.keys.toList().toString()),
-              Text(totalScores.values.toList().toString()),
-            ],
-          ),
-        ],
-      ),
+  /// 再戦
+  void _goToNextRound() {
+    _showConfirm(title: '再戦', body: '再戦しますか？').then(
+      (result) {
+        if (result) {
+          _addRoundScoreToTotal();
+          _incrementMonth();
+          _initializeScores();
+          _nameOfField = '小場';
+        }
+      },
     );
+  }
+
+  /// ラウンドのスコアをtotalに加える
+  void _addRoundScoreToTotal() {
+    setState(() {
+      for (int i = 0; i < players.length; i++) {
+        for (int j = 0; j < nameOfPhases.length; j++) {
+          players[i].totalScore +=
+              players[i].scoreOfRound[nameOfPhases[j]] * scoreMultiplier;
+        }
+      }
+    });
   }
 
   /// 月++
@@ -178,39 +218,205 @@ class HachihachiState extends State<HachihachiPage> {
     );
   }
 
-  /// 月の表示
-  _showMonth() {
-    return Container(
-      child: new Text('${this.month}月'),
+  /// プレイヤーの得点初期化
+  void _initializeScores() {
+    setState(
+      () {
+        for (int i = 0; i < players.length; i++) {
+          for (int j = 0; j < nameOfPhases.length; j++) {
+            players[i].scoreOfRound[nameOfPhases[j]] = 0;
+          }
+        }
+      },
     );
   }
 
-  /// プレイヤー名、得点を1列に表示
-  _showInfoOfPlayer({int number, String phase}) {
-    return Container(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: <Widget>[
-          _showNameOfPlayer(number),
-          _showScoreOfPlayer(number: number, phase: phase),
-        ],
-      ),
-    );
-  }
-
-  /// 3人のプレイヤーの得点を1行に表示
-  _showInfoOfPlayers(String phase) {
+  /// 画面下半分の表示
+  _showLowerHalfView() {
     return Container(
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
-          _showInfoOfPlayer(number: 1, phase: phases[0]),
-          _showInfoOfPlayer(number: 2, phase: phases[1]),
-          _showInfoOfPlayer(number: 3, phase: phases[2]),
+          _showTotalScores(),
+          _showMonthAndField(),
         ],
       ),
     );
   }
+
+  /// 累計得点の表示
+  _showTotalScores() {
+    return DataTable(
+      columns: [
+        DataColumn(label: Text('Name',style: TextStyle(fontSize: 20.0))),
+        DataColumn(label: Text('Total',style: TextStyle(fontSize: 20.0))),
+      ],
+      rows: [
+        DataRow(
+          cells: [
+            DataCell(Text(players[0].name,style: TextStyle(fontSize: 20.0))),
+            DataCell(Text(players[0].totalScore.toString(),style: TextStyle(fontSize: 20.0))),
+          ],
+        ),
+        DataRow(
+          cells: [
+            DataCell(Text(players[1].name,style: TextStyle(fontSize: 20.0))),
+            DataCell(Text(players[1].totalScore.toString(),style: TextStyle(fontSize: 20.0))),
+          ],
+        ),
+        DataRow(
+          cells: [
+            DataCell(Text(players[2].name,style: TextStyle(fontSize: 20.0))),
+            DataCell(Text(players[2].totalScore.toString(),style: TextStyle(fontSize: 20.0))),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// 月と場の表示
+  _showMonthAndField() {
+    return Container(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: <Widget>[
+          _showMonth(),
+          _showFieldSelection(),
+        ],
+      ),
+    );
+  }
+
+  /// 月の表示
+  _showMonth() {
+    return Container(child: Text('${this.month}月',style: TextStyle(fontSize: 20.0)));
+  }
+
+  /// 場の選択肢表示
+  _showFieldSelection() {
+    return DropdownButton<String>(
+      value: _nameOfField,
+      icon: Icon(Icons.arrow_downward),
+      iconSize: 24,
+      elevation: 16,
+      style: TextStyle(color: Colors.deepPurple, fontSize: 20.0),
+      underline: Container(
+        height: 2,
+        color: Colors.deepPurpleAccent,
+      ),
+      onChanged: (String newValue) {
+        setState(() {
+          _nameOfField = newValue;
+          switch (_nameOfField) {
+            case '小場':
+              {
+                scoreMultiplier = 1;
+              }
+              break;
+
+            case '大場':
+              {
+                scoreMultiplier = 2;
+              }
+              break;
+
+            case '絶場':
+              {
+                scoreMultiplier = 4;
+              }
+              break;
+
+            default:
+              {
+                scoreMultiplier = 1;
+              }
+              break;
+          }
+        });
+      },
+      items: <String>['小場', '大場', '絶場']
+          .map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+    );
+  }
+
+//  _showFieldSelection() {
+//    return Container(
+//      child: Column(
+//        children: <Widget>[
+//          Flexible(
+//            fit: FlexFit.loose,
+//            child: RadioListTile(
+//                title: Text('小場'),
+//                groupValue: scoreMultiplier,
+//                activeColor: Colors.green,
+//                value: 1,
+//                dense: true,
+//                selected: true,
+//                onChanged: _handleScoreMultiplier),
+//          ),
+//          Flexible(
+//            fit: FlexFit.loose,
+//            child: RadioListTile(
+//                title: Text('大場'),
+//                groupValue: scoreMultiplier,
+//                activeColor: Colors.green,
+//                value: 2,
+//                dense: true,
+//                onChanged: _handleScoreMultiplier),
+//          ),
+//          Flexible(
+//            fit: FlexFit.loose,
+//            child: RadioListTile(
+//                title: Text('絶場'),
+//                groupValue: scoreMultiplier,
+//                activeColor: Colors.green,
+//                value: 4,
+//                dense: true,
+//                onChanged: _handleScoreMultiplier),
+//          ),
+//        ],
+//      ),
+//    );
+//  }
+
+//  _showFieldSelection() {
+//    return Container(
+//      child: Column(
+//        children: <Widget>[
+//          ListTile(
+//              title: const Text('小場'),
+//              leading: Radio(
+//                  groupValue: scoreMultiplier,
+//                  activeColor: Colors.green,
+//                  value: 1,
+//                  onChanged: _handleScoreMultiplier)),
+//          ListTile(
+//              title: const Text('大場'),
+//              leading: Radio(
+//                  groupValue: scoreMultiplier,
+//                  activeColor: Colors.green,
+//                  value: 2,
+//                  onChanged: _handleScoreMultiplier)),
+//          ListTile(
+//              title: const Text('絶場'),
+//              leading: Radio(
+//                  groupValue: scoreMultiplier,
+//                  activeColor: Colors.green,
+//                  value: 4,
+//                  onChanged: _handleScoreMultiplier)),
+//        ],
+//      ),
+//    );
+//  }
+
+//  void _handleScoreMultiplier(int num) => setState(() {
+//        scoreMultiplier = num;
+//      });
 
   /// 確認画面表示
   Future _showConfirm({String title, String body}) async {
@@ -234,27 +440,6 @@ class HachihachiState extends State<HachihachiPage> {
       ),
     );
     return result;
-  }
-
-  _addRoundScoreToTotal() {
-    for (int i = 0; i < players.length; i++) {
-      for (int j = 0; j < phases.length; j++) {
-        players[i].totalScore += players[i].scoreOfRound[phases[j]];
-      }
-    }
-  }
-
-  /// 再戦
-  void _goToNextRound() {
-    _showConfirm(title: '再戦', body: '再戦しますか？').then(
-      (result) {
-        if (result) {
-          _addRoundScoreToTotal();
-          _incrementMonth();
-          _initializeScores();
-        }
-      },
-    );
   }
 
   /// 月の雑学の表示
@@ -338,27 +523,6 @@ class HachihachiState extends State<HachihachiPage> {
           _showResultOfGame();
         }
       },
-    );
-  }
-
-  /// 中央のバー
-  _centerBar() {
-    return ButtonBar(
-      alignment: MainAxisAlignment.center,
-      children: <Widget>[
-        RaisedButton(
-          onPressed: _goToNextRound,
-          child: new Text('再戦'),
-        ),
-        RaisedButton(
-          onPressed: _showTriviaOfMonth,
-          child: new Text('$month月といえば'),
-        ),
-        RaisedButton(
-          onPressed: _finishGame,
-          child: new Text('終了'),
-        ),
-      ],
     );
   }
 }
