@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:flutter_app/strings/trivia_of_month.dart';
 import 'package:flutter_app/ui/home_page.dart';
+import 'package:flutter_app/useful_module/useful_module.dart';
 
 class KoikoiPage extends StatefulWidget {
   @override
@@ -164,34 +165,9 @@ class KoikoiState extends State<KoikoiPage> {
     );
   }
 
-  /// 確認画面表示
-  Future _showConfirm({String title, String body}) async {
-    bool result = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) => new AlertDialog(
-        title: Text(title),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[new Text(body)],
-        ),
-        actions: <Widget>[
-          FlatButton(
-            child: Text("Cancel"),
-            onPressed: () => Navigator.pop(context, false),
-          ),
-          FlatButton(
-            child: Text("OK"),
-            onPressed: () => Navigator.pop(context, true),
-          ),
-        ],
-      ),
-    );
-    return result;
-  }
-
   /// 再戦
   void _goToNextRound() {
-    _showConfirm(title: '再戦', body: '再戦しますか？').then((result) {
+    UsefulModules.showConfirm(context: context, title: '再戦', body: '再戦しますか？').then((result) {
       if (result) {
         for (int i = 0; i < totalScoreOfPlayer.length; i++) {
           totalScoreOfPlayer[i] += score[i];
@@ -263,7 +239,7 @@ class KoikoiState extends State<KoikoiPage> {
 
   /// 終了
   void _finishGame() {
-    _showConfirm(title: 'ゲーム終了', body: '終了しますか？').then((result) {
+    UsefulModules.showConfirm(context: context, title: 'ゲーム終了', body: '終了しますか？').then((result) {
       if (result) {
         for (int i = 0; i < totalScoreOfPlayer.length; i++) {
           totalScoreOfPlayer[i] += score[i];

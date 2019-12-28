@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/strings/trivia_of_month.dart';
 import 'package:flutter_app/ui/home_page.dart';
+import 'package:flutter_app/useful_module/useful_module.dart';
 
 final List<String> nameOfPhases = ['手役', '出来役', '出来役なし'];
 
@@ -35,7 +36,7 @@ var choices = <Choice>[
 
 class HachihachiState extends State<HachihachiPage> {
   final String title = 'Scoring Hachihachi';
-  int month = 1;
+  int _month = 1;
   final players = [
     new HachihachiPlayer('player1'),
     new HachihachiPlayer('player2'),
@@ -43,6 +44,7 @@ class HachihachiState extends State<HachihachiPage> {
   ];
   int scoreMultiplier = 1; //得点の倍率
   String _nameOfField = '小場';
+  int _round=1; //累計ラウンド数
 
   /// 全体のレイアウト
   @override
@@ -143,7 +145,8 @@ class HachihachiState extends State<HachihachiPage> {
       child: new TextField(
         textAlign: TextAlign.center,
         decoration: InputDecoration.collapsed(
-          hintText: players[number - 1].scoreOfRound[phase].toString(),
+//          hintText: players[number - 1].scoreOfRound[phase].toString(),
+          hintText: '0',
         ),
         onChanged: (text) {
           if (text.length > 0) {
@@ -170,7 +173,7 @@ class HachihachiState extends State<HachihachiPage> {
         ),
         RaisedButton(
           onPressed: _showTriviaOfMonth,
-          child: new Text('$month月といえば'),
+          child: new Text('$_month月といえば'),
         ),
         RaisedButton(
           onPressed: _finishGame,
@@ -182,13 +185,20 @@ class HachihachiState extends State<HachihachiPage> {
 
   /// 再戦
   void _goToNextRound() {
-    _showConfirm(title: '再戦', body: '再戦しますか？').then(
+    UsefulModules.showConfirm(context: context, title: '再戦', body: '再戦しますか？')
+        .then(
       (result) {
         if (result) {
-          _addRoundScoreToTotal();
-          _incrementMonth();
-          _initializeScores();
-          _nameOfField = '小場';
+          if (_isValidTotalOfRound()) {
+            if (_isSouhachi()) {
+              //
+            }
+            _addRoundScoreToTotal();
+            _incrementMonth();
+            _initializeScores();
+            _nameOfField = '小場';
+            _round++;
+          }
         }
       },
     );
@@ -196,8 +206,44 @@ class HachihachiState extends State<HachihachiPage> {
 
   /// ラウンドのスコアをtotalに加える
   void _addRoundScoreToTotal() {
+//    var beforeCalcScoreOfYaku = [[], []];
+//    beforeCalcScoreOfYaku[0] = [
+//      players[0].scoreOfRound[nameOfPhases[0]],
+//      players[1].scoreOfRound[nameOfPhases[0]],
+//      players[2].scoreOfRound[nameOfPhases[0]]
+//    ];
+//    beforeCalcScoreOfYaku[1] = [
+//      players[0].scoreOfRound[nameOfPhases[1]],
+//      players[1].scoreOfRound[nameOfPhases[1]],
+//      players[2].scoreOfRound[nameOfPhases[1]]
+//    ];
     setState(() {
       for (int i = 0; i < players.length; i++) {
+        // 出来役なしの全員の入力から88点引く
+        if (_doDekiyakuExist() == false) {
+          if(!_isSouhachi()) {
+            players[i].scoreOfRound[nameOfPhases[2]] -= 88;
+          } else {
+            //親に+50
+          }
+        }
+//        // 手役、出来役の点数を他から奪う
+//        for (int j = 0; j < nameOfPhases.length; j++) {
+//          if (j == i) {
+//            for (int k = 0; k < 2; k++) {
+//              players[j].scoreOfRound[nameOfPhases[k]] +=
+//                  beforeCalcScoreOfYaku[k][i];
+//            }
+//          } else {
+//            for (int k = 0; k < 2; k++) {
+//              players[j].scoreOfRound[nameOfPhases[k]] -=
+//              beforeCalcScoreOfYaku[k][i]/2;
+//            }
+//          }
+//        }
+//      }
+        // 累計得点にその月の得点を足す
+//        for (int i = 0; i < players.length; i++) {
         for (int j = 0; j < nameOfPhases.length; j++) {
           players[i].totalScore +=
               players[i].scoreOfRound[nameOfPhases[j]] * scoreMultiplier;
@@ -210,9 +256,9 @@ class HachihachiState extends State<HachihachiPage> {
   void _incrementMonth() {
     setState(
       () {
-        this.month++;
-        if (this.month > 12) {
-          this.month %= 12;
+        this._month++;
+        if (this._month > 12) {
+          this._month %= 12;
         }
       },
     );
@@ -229,6 +275,82 @@ class HachihachiState extends State<HachihachiPage> {
         }
       },
     );
+  }
+
+  /// 親決め
+  void _decideParent(){
+    if(_round==1){
+      //ランダムで親を決める
+    }else{
+      //前ラウンドの最高得点の人が親
+      int max=0;
+      for(int i=0;i<players.length;i++){
+        if(max<players[i].scoreOfRound[])
+      }
+    }
+  }
+
+  /// ラウンドの合計得点
+  List<int> _calcTotalScoreOfRound(){
+
+  }
+
+  /// 出来役があるかチェック
+  bool _doDekiyakuExist() {
+    int dekiyakuCnt = 0;
+    for (int i = 0; i < players.length; i++) {
+      if (players[i].scoreOfRound[nameOfPhases[1]] > 0) {
+        dekiyakuCnt++;
+      }
+    }
+    if (dekiyakuCnt > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /// 出来役なしの合計値の妥当性チェック
+  bool _isValidTotalOfRound() {
+    int sum = 0;
+    for (int i = 0; i < players.length; i++) {
+      sum += players[i].scoreOfRound[nameOfPhases[2]];
+    }
+    if (_doDekiyakuExist()) {
+      if (sum != 0) {
+        UsefulModules.showConfirm(
+            context: context,
+            title: 'ちがうよ！',
+            body: '出来役がある場合、\n「出来役なし」タブの得点合計が0になる必要があります。',
+            onlyOK: true);
+        return false;
+      }
+    } else {
+      if (sum != 88 * 3) {
+        UsefulModules.showConfirm(
+            context: context,
+            title: 'ちがうよ！',
+            body: '出来役がない場合、\n「出来役なし」タブの得点合計は88×3＝264になる必要があります。',
+            onlyOK: true);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// 総八判定
+  bool _isSouhachi() {
+    int souhachiCnt = 0;
+    for (int i = 0; i < players.length; i++) {
+      if (players[i].scoreOfRound[nameOfPhases[2]] == 88) {
+        souhachiCnt++;
+      }
+    }
+    if (souhachiCnt == players.length) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   /// 画面下半分の表示
@@ -248,26 +370,29 @@ class HachihachiState extends State<HachihachiPage> {
   _showTotalScores() {
     return DataTable(
       columns: [
-        DataColumn(label: Text('Name',style: TextStyle(fontSize: 20.0))),
-        DataColumn(label: Text('Total',style: TextStyle(fontSize: 20.0))),
+        DataColumn(label: Text('Name', style: TextStyle(fontSize: 20.0))),
+        DataColumn(label: Text('Total', style: TextStyle(fontSize: 20.0))),
       ],
       rows: [
         DataRow(
           cells: [
-            DataCell(Text(players[0].name,style: TextStyle(fontSize: 20.0))),
-            DataCell(Text(players[0].totalScore.toString(),style: TextStyle(fontSize: 20.0))),
+            DataCell(Text(players[0].name, style: TextStyle(fontSize: 20.0))),
+            DataCell(Text(players[0].totalScore.toString(),
+                style: TextStyle(fontSize: 20.0))),
           ],
         ),
         DataRow(
           cells: [
-            DataCell(Text(players[1].name,style: TextStyle(fontSize: 20.0))),
-            DataCell(Text(players[1].totalScore.toString(),style: TextStyle(fontSize: 20.0))),
+            DataCell(Text(players[1].name, style: TextStyle(fontSize: 20.0))),
+            DataCell(Text(players[1].totalScore.toString(),
+                style: TextStyle(fontSize: 20.0))),
           ],
         ),
         DataRow(
           cells: [
-            DataCell(Text(players[2].name,style: TextStyle(fontSize: 20.0))),
-            DataCell(Text(players[2].totalScore.toString(),style: TextStyle(fontSize: 20.0))),
+            DataCell(Text(players[2].name, style: TextStyle(fontSize: 20.0))),
+            DataCell(Text(players[2].totalScore.toString(),
+                style: TextStyle(fontSize: 20.0))),
           ],
         ),
       ],
@@ -289,7 +414,8 @@ class HachihachiState extends State<HachihachiPage> {
 
   /// 月の表示
   _showMonth() {
-    return Container(child: Text('${this.month}月',style: TextStyle(fontSize: 20.0)));
+    return Container(
+        child: Text('${this._month}月', style: TextStyle(fontSize: 20.0)));
   }
 
   /// 場の選択肢表示
@@ -418,40 +544,16 @@ class HachihachiState extends State<HachihachiPage> {
 //        scoreMultiplier = num;
 //      });
 
-  /// 確認画面表示
-  Future _showConfirm({String title, String body}) async {
-    bool result = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) => new AlertDialog(
-        title: new Text(title),
-        content: Center(
-          child: new Text(body),
-        ),
-        actions: <Widget>[
-          FlatButton(
-            child: Text("Cancel"),
-            onPressed: () => Navigator.pop(context, false),
-          ),
-          FlatButton(
-            child: Text("OK"),
-            onPressed: () => Navigator.pop(context, true),
-          ),
-        ],
-      ),
-    );
-    return result;
-  }
-
   /// 月の雑学の表示
   Future _showTriviaOfMonth() async {
     await showDialog(
       context: context,
       builder: (BuildContext context) => new AlertDialog(
-        title: new Text('$month月'),
+        title: new Text('$_month月'),
         content: Padding(
           padding: EdgeInsets.all(0.0),
           child: SingleChildScrollView(
-              child: new Text(TriviaOfMonth.getTrivia(month))),
+              child: new Text(TriviaOfMonth.getTrivia(_month))),
         ),
         actions: <Widget>[
           FlatButton(
@@ -516,7 +618,8 @@ class HachihachiState extends State<HachihachiPage> {
 
   /// 終了
   void _finishGame() {
-    _showConfirm(title: 'ゲーム終了', body: '終了しますか？').then(
+    UsefulModules.showConfirm(context: context, title: 'ゲーム終了', body: '終了しますか？')
+        .then(
       (result) {
         if (result) {
           _addRoundScoreToTotal();
