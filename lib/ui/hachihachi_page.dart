@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/strings/trivia_of_month.dart';
 import 'package:flutter_app/ui/home_page.dart';
 import 'package:flutter_app/useful_module/useful_module.dart';
+import 'dart:math' as math;
 
 final List<String> nameOfPhases = ['手役', '出来役', '出来役なし'];
 
@@ -44,7 +45,7 @@ class HachihachiState extends State<HachihachiPage> {
   ];
   int scoreMultiplier = 1; //得点の倍率
   String _nameOfField = '小場';
-  int _round=1; //累計ラウンド数
+  int numberOfParent = math.Random().nextInt(2);
 
   /// 全体のレイアウト
   @override
@@ -197,7 +198,7 @@ class HachihachiState extends State<HachihachiPage> {
             _incrementMonth();
             _initializeScores();
             _nameOfField = '小場';
-            _round++;
+            _decideParent();
           }
         }
       },
@@ -221,7 +222,7 @@ class HachihachiState extends State<HachihachiPage> {
       for (int i = 0; i < players.length; i++) {
         // 出来役なしの全員の入力から88点引く
         if (_doDekiyakuExist() == false) {
-          if(!_isSouhachi()) {
+          if (!_isSouhachi()) {
             players[i].scoreOfRound[nameOfPhases[2]] -= 88;
           } else {
             //親に+50
@@ -277,23 +278,27 @@ class HachihachiState extends State<HachihachiPage> {
     );
   }
 
-  /// 親決め
-  void _decideParent(){
-    if(_round==1){
-      //ランダムで親を決める
-    }else{
-      //前ラウンドの最高得点の人が親
-      int max=0;
-      for(int i=0;i<players.length;i++){
-        if(max<players[i].scoreOfRound[])
+  /// 2ラウンド目以降の親決め
+  /// 前ラウンドの出来役マンか「出来役なし」点の最強が親
+  void _decideParent() {
+    int max = 0, numOfMax;
+    for (int i = 0; i < players.length; i++) {
+      //出来役がある場合
+      if (players[i].scoreOfRound[nameOfPhases[1]] > 0) {
+        numberOfParent = i;
+        return;
+      } else {
+        if (max < players[i].scoreOfRound[nameOfPhases[2]]) {
+          max = players[i].scoreOfRound[nameOfPhases[2]];
+          numOfMax = i;
+        }
       }
     }
+    numberOfParent = numOfMax;
   }
 
   /// ラウンドの合計得点
-  List<int> _calcTotalScoreOfRound(){
-
-  }
+  List<int> _calcTotalScoreOfRound() {}
 
   /// 出来役があるかチェック
   bool _doDekiyakuExist() {
