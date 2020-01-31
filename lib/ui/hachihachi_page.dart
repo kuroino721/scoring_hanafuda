@@ -22,17 +22,17 @@ class HachihachiPage extends StatefulWidget {
   HachihachiState createState() => new HachihachiState();
 }
 
-class Choice {
-  Choice({this.title, this.icon});
+class Phase {
+  Phase({this.title, this.icon});
 
   final String title;
   final IconData icon;
 }
 
-var choices = <Choice>[
-  Choice(title: nameOfPhases[0]),
-  Choice(title: nameOfPhases[1]),
-  Choice(title: nameOfPhases[2]),
+var choices = <Phase>[
+  Phase(title: nameOfPhases[0]),
+  Phase(title: nameOfPhases[1]),
+  Phase(title: nameOfPhases[2]),
 ];
 
 class HachihachiState extends State<HachihachiPage> {
@@ -58,7 +58,7 @@ class HachihachiState extends State<HachihachiPage> {
             title: Text(title),
             bottom: TabBar(
               isScrollable: true,
-              tabs: choices.map((Choice choice) {
+              tabs: choices.map((Phase choice) {
                 return Tab(
                   text: choice.title,
                 );
@@ -85,20 +85,6 @@ class HachihachiState extends State<HachihachiPage> {
           _showInfoOfPlayers(phase),
           _centerBar(),
           _showLowerHalfView(),
-        ],
-      ),
-    );
-  }
-
-  /// 3人のプレイヤーの得点を1行に表示
-  _showInfoOfPlayers(String phase) {
-    return Container(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: <Widget>[
-          _showInfoOfPlayer(number: 1, phase: phase),
-          _showInfoOfPlayer(number: 2, phase: phase),
-          _showInfoOfPlayer(number: 3, phase: phase),
         ],
       ),
     );
@@ -135,6 +121,20 @@ class HachihachiState extends State<HachihachiPage> {
             );
           }
         },
+      ),
+    );
+  }
+
+  /// 3人のプレイヤーの得点を1行に表示
+  _showInfoOfPlayers(String phase) {
+    return Container(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: <Widget>[
+          _showInfoOfPlayer(number: 1, phase: phase),
+          _showInfoOfPlayer(number: 2, phase: phase),
+          _showInfoOfPlayer(number: 3, phase: phase),
+        ],
       ),
     );
   }
@@ -192,13 +192,19 @@ class HachihachiState extends State<HachihachiPage> {
         if (result) {
           if (_isValidTotalOfRound()) {
             if (_isSouhachi()) {
-              //
+              UsefulModules.showConfirm(
+                  context: context,
+                  title: '総八',
+                  body: '総八だよ！やったね！',
+                  onlyOK: true);
             }
             _addRoundScoreToTotal();
             _incrementMonth();
             _initializeScores();
             _nameOfField = '小場';
             _decideParent();
+          } else {
+            return;
           }
         }
       },
@@ -207,50 +213,69 @@ class HachihachiState extends State<HachihachiPage> {
 
   /// ラウンドのスコアをtotalに加える
   void _addRoundScoreToTotal() {
-//    var beforeCalcScoreOfYaku = [[], []];
-//    beforeCalcScoreOfYaku[0] = [
-//      players[0].scoreOfRound[nameOfPhases[0]],
-//      players[1].scoreOfRound[nameOfPhases[0]],
-//      players[2].scoreOfRound[nameOfPhases[0]]
-//    ];
-//    beforeCalcScoreOfYaku[1] = [
-//      players[0].scoreOfRound[nameOfPhases[1]],
-//      players[1].scoreOfRound[nameOfPhases[1]],
-//      players[2].scoreOfRound[nameOfPhases[1]]
-//    ];
     setState(() {
-      for (int i = 0; i < players.length; i++) {
-        // 出来役なしの全員の入力から88点引く
-        if (_doDekiyakuExist() == false) {
-          if (!_isSouhachi()) {
-            players[i].scoreOfRound[nameOfPhases[2]] -= 88;
-          } else {
-            //親に+50
-          }
+      _calcScoreOfYaku();
+      if (_isSouhachi()) {
+        for (int i = 0; i < players.length; i++) {
+          players[i].scoreOfRound[nameOfPhases[2]] = 0;
         }
-//        // 手役、出来役の点数を他から奪う
-//        for (int j = 0; j < nameOfPhases.length; j++) {
-//          if (j == i) {
-//            for (int k = 0; k < 2; k++) {
-//              players[j].scoreOfRound[nameOfPhases[k]] +=
-//                  beforeCalcScoreOfYaku[k][i];
-//            }
-//          } else {
-//            for (int k = 0; k < 2; k++) {
-//              players[j].scoreOfRound[nameOfPhases[k]] -=
-//              beforeCalcScoreOfYaku[k][i]/2;
-//            }
-//          }
-//        }
-//      }
-        // 累計得点にその月の得点を足す
-//        for (int i = 0; i < players.length; i++) {
+      } else {
+        _calcScoreOfNoDekiyaku();
+      }
+
+      // 累計得点にその月の得点を足す
+      for (int i = 0; i < players.length; i++) {
         for (int j = 0; j < nameOfPhases.length; j++) {
           players[i].totalScore +=
               players[i].scoreOfRound[nameOfPhases[j]] * scoreMultiplier;
         }
       }
     });
+  }
+
+  /// 手役、出来役のラウンドスコアを集計
+  void _calcScoreOfYaku() {
+    var tmpScoreOfTeyaku = [
+      players[0].scoreOfRound[nameOfPhases[0]],
+      players[1].scoreOfRound[nameOfPhases[0]],
+      players[2].scoreOfRound[nameOfPhases[0]]
+    ];
+    var tmpScoreOfDekiyaku = [
+      players[0].scoreOfRound[nameOfPhases[1]],
+      players[1].scoreOfRound[nameOfPhases[1]],
+      players[2].scoreOfRound[nameOfPhases[1]]
+    ];
+
+    if (_isSouhachi()) {
+      _calcSouhachi();
+    }
+
+    for (int i = 0; i < players.length; i++) {
+      for (int j = 0; j < 2; j++) {
+        players[i].scoreOfRound[nameOfPhases[j]] *= 2;
+      }
+    }
+    for (int i = 0; i < players.length; i++) {
+      players[i].scoreOfRound[nameOfPhases[0]] -=
+          (tmpScoreOfTeyaku[(i + 1) % 3] + tmpScoreOfTeyaku[(i + 2) % 3]);
+      players[i].scoreOfRound[nameOfPhases[1]] -=
+          (tmpScoreOfDekiyaku[(i + 1) % 3] + tmpScoreOfDekiyaku[(i + 2) % 3]);
+    }
+  }
+
+  /// 出来役なしだけのラウンドスコアを集計
+  void _calcScoreOfNoDekiyaku() {
+    for (int i = 0; i < players.length; i++) {
+      players[i].scoreOfRound[nameOfPhases[2]] -= 88;
+    }
+  }
+
+  /// 総八のときの得点修正
+  void _calcSouhachi() {
+    players[numberOfParent].scoreOfRound[nameOfPhases[1]] += 100;
+    for (int i = 1; i <= 2; i++) {
+      players[(numberOfParent + i) % 2].scoreOfRound[nameOfPhases[1]] -= 50;
+    }
   }
 
   /// 月++
@@ -296,9 +321,6 @@ class HachihachiState extends State<HachihachiPage> {
     }
     numberOfParent = numOfMax;
   }
-
-  /// ラウンドの合計得点
-  List<int> _calcTotalScoreOfRound() {}
 
   /// 出来役があるかチェック
   bool _doDekiyakuExist() {
@@ -627,8 +649,17 @@ class HachihachiState extends State<HachihachiPage> {
         .then(
       (result) {
         if (result) {
-          _addRoundScoreToTotal();
-          _showResultOfGame();
+          if (_isValidTotalOfRound()) {
+            _addRoundScoreToTotal();
+            _showResultOfGame();
+          } else {
+            UsefulModules.showConfirm(
+                    context: context, title: 'ゲーム終了', body: '強制的に終了しますか？')
+                .then((result) {
+              _showResultOfGame();
+            });
+            return;
+          }
         }
       },
     );
