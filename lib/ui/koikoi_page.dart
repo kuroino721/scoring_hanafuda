@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter_app/strings/trivia_of_month.dart';
 import 'package:flutter_app/ui/home_page.dart';
 import 'package:flutter_app/useful_module/useful_module.dart';
+import 'package:flutter_app/info/player.dart';
 
 class KoikoiPage extends StatefulWidget {
   @override
@@ -11,9 +12,7 @@ class KoikoiPage extends StatefulWidget {
 
 class KoikoiState extends State<KoikoiPage> {
   final String title = 'Scoring Koikoi';
-  List<String> nameOfPlayer = ['player1', 'player2'];
-  List<int> score = new List.filled(2, 0);
-  List<int> totalScoreOfPlayer = new List.filled(2, 0);
+  List<Player> players = [Player('player1'), Player('player2')];
   int month = 1;
 
   /// 全体のレイアウト
@@ -46,12 +45,12 @@ class KoikoiState extends State<KoikoiPage> {
       child: new TextField(
           textAlign: TextAlign.center,
           decoration: InputDecoration.collapsed(
-            hintText: '${nameOfPlayer[numOfPlayer - 1]}',
+            hintText: '${players[numOfPlayer - 1].name}',
           ),
           onChanged: (text) {
             if (text.length > 0) {
               setState(() {
-                this.nameOfPlayer[numOfPlayer - 1] = text;
+                players[numOfPlayer - 1].name = text;
               });
             }
           }),
@@ -61,8 +60,8 @@ class KoikoiState extends State<KoikoiPage> {
   /// プレイヤーの得点初期化
   void _initializeScores() {
     setState(() {
-      for (int i = 0; i < this.score.length; i++) {
-        score[i] = 0;
+      for (int i = 0; i < players.length; i++) {
+        players[i].monthScore = 0;
       }
     });
   }
@@ -70,14 +69,14 @@ class KoikoiState extends State<KoikoiPage> {
   /// 点数++
   void _incrementScore(int numOfPlayer) {
     setState(() {
-      score[numOfPlayer - 1]++;
+      players[numOfPlayer - 1].monthScore++;
     });
   }
 
   /// 点数--
   void _decrementScore(int numOfPlayer) {
     setState(() {
-      score[numOfPlayer - 1]--;
+      players[numOfPlayer - 1].monthScore--;
     });
   }
 
@@ -108,7 +107,7 @@ class KoikoiState extends State<KoikoiPage> {
   _showScoreOfPlayer(int numOfPlayer) {
     return Container(
       child: new Text(
-        score[numOfPlayer - 1].toString(),
+        players[numOfPlayer - 1].monthScore.toString(),
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 100,
@@ -121,7 +120,7 @@ class KoikoiState extends State<KoikoiPage> {
   /// 累計得点の表示
   _showTotalScoreOfPlayer(int numOfPlayer) {
     return Container(
-      child: new Text('total: ${this.totalScoreOfPlayer[numOfPlayer - 1]}',
+      child: new Text('total: ${players[numOfPlayer - 1].totalScore}',
           style: TextStyle(fontSize: 20)),
     );
   }
@@ -129,9 +128,9 @@ class KoikoiState extends State<KoikoiPage> {
   /// 月++
   void _incrementMonth() {
     setState(() {
-      this.month++;
-      if (this.month > 12) {
-        this.month %= 12;
+      month++;
+      if (month > 12) {
+        month %= 12;
       }
     });
   }
@@ -139,7 +138,7 @@ class KoikoiState extends State<KoikoiPage> {
   /// 月の表示
   _showMonth() {
     return Container(
-      child: new Text('${this.month}月', style: TextStyle(fontSize: 20)),
+      child: new Text('$month月', style: TextStyle(fontSize: 20)),
     );
   }
 
@@ -167,10 +166,11 @@ class KoikoiState extends State<KoikoiPage> {
 
   /// 再戦
   void _goToNextRound() {
-    UsefulModules.showConfirm(context: context, title: '再戦', body: '再戦しますか？').then((result) {
+    UsefulModules.showConfirm(context: context, title: '再戦', body: '再戦しますか？')
+        .then((result) {
       if (result) {
-        for (int i = 0; i < totalScoreOfPlayer.length; i++) {
-          totalScoreOfPlayer[i] += score[i];
+        for (int i = 0; i < players.length; i++) {
+          players[i].totalScore += players[i].monthScore;
         }
         _incrementMonth();
         _initializeScores();
@@ -202,13 +202,13 @@ class KoikoiState extends State<KoikoiPage> {
   /// 勝敗ダイアログ
   Future _showResultOfGame() async {
     String textOfScore, textOfResult;
-    textOfScore = "${nameOfPlayer[0]}さん: ${totalScoreOfPlayer[0]}文\n"
-        "${nameOfPlayer[1]}さん: ${totalScoreOfPlayer[1]}文\n";
-    if (totalScoreOfPlayer[0] > totalScoreOfPlayer[1]) {
-      textOfResult = "${nameOfPlayer[0]}さんの勝ちです！おみごと！";
-    } else if (totalScoreOfPlayer[0] < totalScoreOfPlayer[1]) {
-      textOfResult = "${nameOfPlayer[1]}さんの勝ちです！あっぱれ！";
-    } else {
+    textOfScore = "${players[0].name}さん: ${players[0].totalScore}文\n"
+        "${players[1].name}さん: ${players[1].totalScore}文\n";
+    if (players[0].totalScore > players[1].totalScore) {
+      textOfResult = "${players[0].name}さんの勝ちです！おみごと！";
+    } else if (players[0].totalScore < players[1].totalScore) {
+      textOfResult = "${players[1].name}さんの勝ちです！あっぱれ！";
+    } else if (players[0].totalScore == players[1].totalScore) {
       textOfResult = "引き分けです！良い勝負でしたね！";
     }
     await showDialog(
@@ -239,10 +239,11 @@ class KoikoiState extends State<KoikoiPage> {
 
   /// 終了
   void _finishGame() {
-    UsefulModules.showConfirm(context: context, title: 'ゲーム終了', body: '終了しますか？').then((result) {
+    UsefulModules.showConfirm(context: context, title: 'ゲーム終了', body: '終了しますか？')
+        .then((result) {
       if (result) {
-        for (int i = 0; i < totalScoreOfPlayer.length; i++) {
-          totalScoreOfPlayer[i] += score[i];
+        for (int i = 0; i < players.length; i++) {
+          players[i].totalScore += players[i].monthScore;
         }
         _showResultOfGame();
       }
