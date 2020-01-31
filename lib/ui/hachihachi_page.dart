@@ -1,64 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/info/hachihachi_field.dart';
 import 'package:flutter_app/strings/trivia_of_month.dart';
 import 'package:flutter_app/ui/home_page.dart';
 import 'package:flutter_app/useful_module/useful_module.dart';
+import 'package:flutter_app/info/hachihachi_player.dart';
 import 'dart:math' as math;
 
-final List<String> nameOfPhases = ['手役', '出来役', '出来役なし'];
-
-class HachihachiPlayer {
-  String name;
-  HachihachiPlayer(this.name);
-  var scoreOfRound = {
-    nameOfPhases[0]: 0,
-    nameOfPhases[1]: 0,
-    nameOfPhases[2]: 0,
-  };
-  var totalScore = 0;
-}
+final List<String> phaseNames = ['手役', '出来役', '出来役なし'];
 
 class HachihachiPage extends StatefulWidget {
   @override
   HachihachiState createState() => new HachihachiState();
 }
 
-class Phase {
-  Phase({this.title, this.icon});
+class PhaseTab {
+  PhaseTab({this.title, this.icon});
 
   final String title;
   final IconData icon;
 }
 
-var choices = <Phase>[
-  Phase(title: nameOfPhases[0]),
-  Phase(title: nameOfPhases[1]),
-  Phase(title: nameOfPhases[2]),
+var phaseTabs = <PhaseTab>[
+  PhaseTab(title: phaseNames[0]),
+  PhaseTab(title: phaseNames[1]),
+  PhaseTab(title: phaseNames[2]),
 ];
 
 class HachihachiState extends State<HachihachiPage> {
   final String title = 'Scoring Hachihachi';
-  int _month = 1;
-  final players = [
-    new HachihachiPlayer('player1'),
-    new HachihachiPlayer('player2'),
-    new HachihachiPlayer('player3')
+  List<HachihachiPlayer> _players = [
+    HachihachiPlayer('player1'),
+    HachihachiPlayer('player2'),
+    HachihachiPlayer('player3')
   ];
-  int scoreMultiplier = 1; //得点の倍率
-  String _nameOfField = '小場';
-  int numberOfParent = math.Random().nextInt(2);
+  int _month = 1;
+  List<HachihachiField> _fields = [
+    HachihachiField('小場', 1),
+    HachihachiField('大場', 2),
+    HachihachiField('絶場', 4)
+  ];
 
   /// 全体のレイアウト
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: DefaultTabController(
-        length: choices.length,
+        length: phaseTabs.length,
         child: Scaffold(
           appBar: new AppBar(
             title: Text(title),
             bottom: TabBar(
               isScrollable: true,
-              tabs: choices.map((Phase choice) {
+              tabs: phaseTabs.map((PhaseTab choice) {
                 return Tab(
                   text: choice.title,
                 );
@@ -67,9 +60,9 @@ class HachihachiState extends State<HachihachiPage> {
           ),
           body: TabBarView(
             children: <Widget>[
-              _showInfoOfPhase(nameOfPhases[0]),
-              _showInfoOfPhase(nameOfPhases[1]),
-              _showInfoOfPhase(nameOfPhases[2]),
+              _showInfoOfPhase(phaseNames[0]),
+              _showInfoOfPhase(phaseNames[1]),
+              _showInfoOfPhase(phaseNames[2]),
             ],
           ),
         ),
@@ -110,13 +103,13 @@ class HachihachiState extends State<HachihachiPage> {
       child: new TextField(
         textAlign: TextAlign.center,
         decoration: InputDecoration.collapsed(
-          hintText: players[number - 1].name,
+          hintText: _players[number - 1].name,
         ),
         onChanged: (text) {
           if (text.length > 0) {
             setState(
               () {
-                players[number - 1].name = text;
+                _players[number - 1].name = text;
               },
             );
           }
@@ -153,7 +146,7 @@ class HachihachiState extends State<HachihachiPage> {
           if (text.length > 0) {
             setState(
               () {
-                players[number - 1].scoreOfRound[phase] = int.parse(text);
+                _players[number - 1].scoreOfRound[phase] = int.parse(text);
               },
             );
           }
@@ -216,18 +209,18 @@ class HachihachiState extends State<HachihachiPage> {
     setState(() {
       _calcScoreOfYaku();
       if (_isSouhachi()) {
-        for (int i = 0; i < players.length; i++) {
-          players[i].scoreOfRound[nameOfPhases[2]] = 0;
+        for (int i = 0; i < _players.length; i++) {
+          _players[i].scoreOfRound[phaseNames[2]] = 0;
         }
       } else {
         _calcScoreOfNoDekiyaku();
       }
 
       // 累計得点にその月の得点を足す
-      for (int i = 0; i < players.length; i++) {
-        for (int j = 0; j < nameOfPhases.length; j++) {
-          players[i].totalScore +=
-              players[i].scoreOfRound[nameOfPhases[j]] * scoreMultiplier;
+      for (int i = 0; i < _players.length; i++) {
+        for (int j = 0; j < phaseNames.length; j++) {
+          _players[i].totalScore +=
+              _players[i].scoreOfRound[phaseNames[j]] * scoreMultiplier;
         }
       }
     });
@@ -236,45 +229,45 @@ class HachihachiState extends State<HachihachiPage> {
   /// 手役、出来役のラウンドスコアを集計
   void _calcScoreOfYaku() {
     var tmpScoreOfTeyaku = [
-      players[0].scoreOfRound[nameOfPhases[0]],
-      players[1].scoreOfRound[nameOfPhases[0]],
-      players[2].scoreOfRound[nameOfPhases[0]]
+      _players[0].scoreOfRound[phaseNames[0]],
+      _players[1].scoreOfRound[phaseNames[0]],
+      _players[2].scoreOfRound[phaseNames[0]]
     ];
     var tmpScoreOfDekiyaku = [
-      players[0].scoreOfRound[nameOfPhases[1]],
-      players[1].scoreOfRound[nameOfPhases[1]],
-      players[2].scoreOfRound[nameOfPhases[1]]
+      _players[0].scoreOfRound[phaseNames[1]],
+      _players[1].scoreOfRound[phaseNames[1]],
+      _players[2].scoreOfRound[phaseNames[1]]
     ];
 
     if (_isSouhachi()) {
       _calcSouhachi();
     }
 
-    for (int i = 0; i < players.length; i++) {
+    for (int i = 0; i < _players.length; i++) {
       for (int j = 0; j < 2; j++) {
-        players[i].scoreOfRound[nameOfPhases[j]] *= 2;
+        _players[i].scoreOfRound[phaseNames[j]] *= 2;
       }
     }
-    for (int i = 0; i < players.length; i++) {
-      players[i].scoreOfRound[nameOfPhases[0]] -=
+    for (int i = 0; i < _players.length; i++) {
+      _players[i].scoreOfRound[phaseNames[0]] -=
           (tmpScoreOfTeyaku[(i + 1) % 3] + tmpScoreOfTeyaku[(i + 2) % 3]);
-      players[i].scoreOfRound[nameOfPhases[1]] -=
+      _players[i].scoreOfRound[phaseNames[1]] -=
           (tmpScoreOfDekiyaku[(i + 1) % 3] + tmpScoreOfDekiyaku[(i + 2) % 3]);
     }
   }
 
   /// 出来役なしだけのラウンドスコアを集計
   void _calcScoreOfNoDekiyaku() {
-    for (int i = 0; i < players.length; i++) {
-      players[i].scoreOfRound[nameOfPhases[2]] -= 88;
+    for (int i = 0; i < _players.length; i++) {
+      _players[i].scoreOfRound[phaseNames[2]] -= 88;
     }
   }
 
   /// 総八のときの得点修正
   void _calcSouhachi() {
-    players[numberOfParent].scoreOfRound[nameOfPhases[1]] += 100;
+    _players[numberOfParent].scoreOfRound[phaseNames[1]] += 100;
     for (int i = 1; i <= 2; i++) {
-      players[(numberOfParent + i) % 2].scoreOfRound[nameOfPhases[1]] -= 50;
+      _players[(numberOfParent + i) % 2].scoreOfRound[phaseNames[1]] -= 50;
     }
   }
 
@@ -294,27 +287,27 @@ class HachihachiState extends State<HachihachiPage> {
   void _initializeScores() {
     setState(
       () {
-        for (int i = 0; i < players.length; i++) {
-          for (int j = 0; j < nameOfPhases.length; j++) {
-            players[i].scoreOfRound[nameOfPhases[j]] = 0;
+        for (int i = 0; i < _players.length; i++) {
+          for (int j = 0; j < phaseNames.length; j++) {
+            _players[i].scoreOfRound[phaseNames[j]] = 0;
           }
         }
       },
     );
   }
 
-  /// 2ラウンド目以降の親決め
+  /// 2ラウンド目以降の親決め//1回目の親決めもここに組み込もう
   /// 前ラウンドの出来役マンか「出来役なし」点の最強が親
   void _decideParent() {
     int max = 0, numOfMax;
-    for (int i = 0; i < players.length; i++) {
+    for (int i = 0; i < _players.length; i++) {
       //出来役がある場合
-      if (players[i].scoreOfRound[nameOfPhases[1]] > 0) {
+      if (_players[i].scoreOfRound[phaseNames[1]] > 0) {
         numberOfParent = i;
         return;
       } else {
-        if (max < players[i].scoreOfRound[nameOfPhases[2]]) {
-          max = players[i].scoreOfRound[nameOfPhases[2]];
+        if (max < _players[i].scoreOfRound[phaseNames[2]]) {
+          max = _players[i].scoreOfRound[phaseNames[2]];
           numOfMax = i;
         }
       }
@@ -325,8 +318,8 @@ class HachihachiState extends State<HachihachiPage> {
   /// 出来役があるかチェック
   bool _doDekiyakuExist() {
     int dekiyakuCnt = 0;
-    for (int i = 0; i < players.length; i++) {
-      if (players[i].scoreOfRound[nameOfPhases[1]] > 0) {
+    for (int i = 0; i < _players.length; i++) {
+      if (_players[i].scoreOfRound[phaseNames[1]] > 0) {
         dekiyakuCnt++;
       }
     }
@@ -340,8 +333,8 @@ class HachihachiState extends State<HachihachiPage> {
   /// 出来役なしの合計値の妥当性チェック
   bool _isValidTotalOfRound() {
     int sum = 0;
-    for (int i = 0; i < players.length; i++) {
-      sum += players[i].scoreOfRound[nameOfPhases[2]];
+    for (int i = 0; i < _players.length; i++) {
+      sum += _players[i].scoreOfRound[phaseNames[2]];
     }
     if (_doDekiyakuExist()) {
       if (sum != 0) {
@@ -368,12 +361,12 @@ class HachihachiState extends State<HachihachiPage> {
   /// 総八判定
   bool _isSouhachi() {
     int souhachiCnt = 0;
-    for (int i = 0; i < players.length; i++) {
-      if (players[i].scoreOfRound[nameOfPhases[2]] == 88) {
+    for (int i = 0; i < _players.length; i++) {
+      if (_players[i].scoreOfRound[phaseNames[2]] == 88) {
         souhachiCnt++;
       }
     }
-    if (souhachiCnt == players.length) {
+    if (souhachiCnt == _players.length) {
       return true;
     } else {
       return false;
@@ -403,22 +396,22 @@ class HachihachiState extends State<HachihachiPage> {
       rows: [
         DataRow(
           cells: [
-            DataCell(Text(players[0].name, style: TextStyle(fontSize: 20.0))),
-            DataCell(Text(players[0].totalScore.toString(),
+            DataCell(Text(_players[0].name, style: TextStyle(fontSize: 20.0))),
+            DataCell(Text(_players[0].totalScore.toString(),
                 style: TextStyle(fontSize: 20.0))),
           ],
         ),
         DataRow(
           cells: [
-            DataCell(Text(players[1].name, style: TextStyle(fontSize: 20.0))),
-            DataCell(Text(players[1].totalScore.toString(),
+            DataCell(Text(_players[1].name, style: TextStyle(fontSize: 20.0))),
+            DataCell(Text(_players[1].totalScore.toString(),
                 style: TextStyle(fontSize: 20.0))),
           ],
         ),
         DataRow(
           cells: [
-            DataCell(Text(players[2].name, style: TextStyle(fontSize: 20.0))),
-            DataCell(Text(players[2].totalScore.toString(),
+            DataCell(Text(_players[2].name, style: TextStyle(fontSize: 20.0))),
+            DataCell(Text(_players[2].totalScore.toString(),
                 style: TextStyle(fontSize: 20.0))),
           ],
         ),
@@ -595,13 +588,13 @@ class HachihachiState extends State<HachihachiPage> {
   List<HachihachiPlayer> _decideWinner() {
     List<HachihachiPlayer> winners = [];
     int min = 0;
-    for (int i = 0; i < players.length; i++) {
-      if (min <= players[i].totalScore) {
-        if (min < players[i].totalScore && winners.length != 0) {
+    for (int i = 0; i < _players.length; i++) {
+      if (min <= _players[i].totalScore) {
+        if (min < _players[i].totalScore && winners.length != 0) {
           winners = [];
         }
-        winners.add(players[i]);
-        min = players[i].totalScore;
+        winners.add(_players[i]);
+        min = _players[i].totalScore;
       }
     }
     return winners;
@@ -610,9 +603,9 @@ class HachihachiState extends State<HachihachiPage> {
   /// 勝敗ダイアログ
   Future _showResultOfGame() async {
     String textOfScore, textOfResult;
-    textOfScore = "${players[0].name}さん: ${players[0].totalScore}文\n"
-        "${players[1].name}さん: ${players[1].totalScore}文\n"
-        "${players[2].name}さん: ${players[2].totalScore}文\n\n";
+    textOfScore = "${_players[0].name}さん: ${_players[0].totalScore}文\n"
+        "${_players[1].name}さん: ${_players[1].totalScore}文\n"
+        "${_players[2].name}さん: ${_players[2].totalScore}文\n\n";
     var winners = _decideWinner();
     if (winners.length == 1) {
       textOfResult = "${winners[0].name}さんの勝ちです！おみごと！";
