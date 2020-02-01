@@ -5,12 +5,13 @@ import 'package:flutter_app/ui/home_page.dart';
 import 'package:flutter_app/useful_module/useful_module.dart';
 import 'package:flutter_app/info/hachihachi_player.dart';
 import 'dart:math' as math;
+import 'package:after_layout/after_layout.dart';
 
-final List<String> phaseNames = ['手役', '出来役', '出来役なし'];
+final List<String> phaseNames = ['手役', '出来役', '取り札'];
 
 class HachihachiPage extends StatefulWidget {
   @override
-  HachihachiState createState() => new HachihachiState();
+  HachihachiState createState() => HachihachiState();
 }
 
 class PhaseTab {
@@ -26,8 +27,9 @@ var phaseTabs = <PhaseTab>[
   PhaseTab(title: phaseNames[2]),
 ];
 
-class HachihachiState extends State<HachihachiPage> {
-  final String title = 'Scoring Hachihachi';
+class HachihachiState extends State<HachihachiPage>
+    with AfterLayoutMixin<HachihachiPage> {
+  final String _title = 'Scoring Hachihachi';
   List<HachihachiPlayer> _players = [
     HachihachiPlayer('player1'),
     HachihachiPlayer('player2'),
@@ -39,6 +41,9 @@ class HachihachiState extends State<HachihachiPage> {
     HachihachiField('大場', 2),
     HachihachiField('絶場', 4)
   ];
+  int _round = 1;
+  String _fieldName = '小場';
+  int _scoreMagnification = 1;
 
   /// 全体のレイアウト
   @override
@@ -47,8 +52,8 @@ class HachihachiState extends State<HachihachiPage> {
       home: DefaultTabController(
         length: phaseTabs.length,
         child: Scaffold(
-          appBar: new AppBar(
-            title: Text(title),
+          appBar: AppBar(
+            title: Text(_title),
             bottom: TabBar(
               isScrollable: true,
               tabs: phaseTabs.map((PhaseTab choice) {
@@ -60,9 +65,9 @@ class HachihachiState extends State<HachihachiPage> {
           ),
           body: TabBarView(
             children: <Widget>[
-              _showInfoOfPhase(phaseNames[0]),
-              _showInfoOfPhase(phaseNames[1]),
-              _showInfoOfPhase(phaseNames[2]),
+              _showPhaseInfo(0),
+              _showPhaseInfo(1),
+              _showPhaseInfo(2),
             ],
           ),
         ),
@@ -70,12 +75,57 @@ class HachihachiState extends State<HachihachiPage> {
     );
   }
 
-  _showInfoOfPhase(String phase) {
+  //ページが開いた直後に1回だけ行われる処理
+  @override
+  void afterFirstLayout(BuildContext context) {
+    //TODO: プレイヤー名入力ダイアログ表示
+    _decideParent(0);
+    int _parent;
+    for (int i = 0; i < 3; i++) {
+      if (_players[i].parent) {
+        _parent = i;
+        break;
+      }
+    }
+    UsefulModules.showConfirm(
+        context: context,
+        title: '最初の親',
+        body: '最初の親は ${_players[_parent].name} です',
+        onlyOK: true);
+  }
+
+  //TODO: 名前要求ダイアログ
+  _showRequestNameDialog() {
+    showConfirm() async {
+      return await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          title: Text(title),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[Text(body)],
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text("Cancel"),
+              onPressed: () => Navigator.pop(context, false),
+            ),
+            FlatButton(
+              child: Text("OK"),
+              onPressed: () => Navigator.pop(context, true),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  _showPhaseInfo(int phase) {
     return Container(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
-          _showInfoOfPlayers(phase),
+          _showPlayersInfo(phase),
           _centerBar(),
           _showLowerHalfView(),
         ],
@@ -84,23 +134,23 @@ class HachihachiState extends State<HachihachiPage> {
   }
 
   /// プレイヤー名、得点を1列に表示
-  _showInfoOfPlayer({int number, String phase}) {
+  _showPlayerInfo({int number, int phase}) {
     return Container(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
-          _showNameOfPlayer(number),
-          _showScoreOfPlayer(number: number, phase: phase),
+          _showPlayerName(number),
+          _showPhaseScore(number: number, phase: phase),
         ],
       ),
     );
   }
 
   /// プレイヤー名表示（編集可能）
-  _showNameOfPlayer(int number) {
+  _showPlayerName(int number) {
     return Container(
       width: 100.0,
-      child: new TextField(
+      child: TextField(
         textAlign: TextAlign.center,
         decoration: InputDecoration.collapsed(
           hintText: _players[number - 1].name,
@@ -119,34 +169,33 @@ class HachihachiState extends State<HachihachiPage> {
   }
 
   /// 3人のプレイヤーの得点を1行に表示
-  _showInfoOfPlayers(String phase) {
+  _showPlayersInfo(int phase) {
     return Container(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
-          _showInfoOfPlayer(number: 1, phase: phase),
-          _showInfoOfPlayer(number: 2, phase: phase),
-          _showInfoOfPlayer(number: 3, phase: phase),
+          _showPlayerInfo(number: 1, phase: phase),
+          _showPlayerInfo(number: 2, phase: phase),
+          _showPlayerInfo(number: 3, phase: phase),
         ],
       ),
     );
   }
 
   /// 得点の表示
-  _showScoreOfPlayer({int number, String phase}) {
+  _showPhaseScore({int number, int phase}) {
     return Container(
       width: 120.0,
-      child: new TextField(
+      child: TextField(
         textAlign: TextAlign.center,
         decoration: InputDecoration.collapsed(
-//          hintText: players[number - 1].scoreOfRound[phase].toString(),
           hintText: '0',
         ),
         onChanged: (text) {
           if (text.length > 0) {
             setState(
               () {
-                _players[number - 1].scoreOfRound[phase] = int.parse(text);
+                _players[number - 1].phaseScore[phase] = int.parse(text);
               },
             );
           }
@@ -163,210 +212,168 @@ class HachihachiState extends State<HachihachiPage> {
       children: <Widget>[
         RaisedButton(
           onPressed: _goToNextRound,
-          child: new Text('再戦'),
+          child: Text('再戦'),
         ),
         RaisedButton(
           onPressed: _showTriviaOfMonth,
-          child: new Text('$_month月といえば'),
+          child: Text('$_month月といえば'),
         ),
         RaisedButton(
           onPressed: _finishGame,
-          child: new Text('終了'),
+          child: Text('終了'),
         ),
       ],
     );
   }
 
   /// 再戦
-  void _goToNextRound() {
+  void _goToNextRound(int phase) {
     UsefulModules.showConfirm(context: context, title: '再戦', body: '再戦しますか？')
         .then(
       (result) {
         if (result) {
-          if (_isValidTotalOfRound()) {
-            if (_isSouhachi()) {
-              UsefulModules.showConfirm(
-                  context: context,
-                  title: '総八',
-                  body: '総八だよ！やったね！',
-                  onlyOK: true);
-            }
-            _addRoundScoreToTotal();
-            _incrementMonth();
-            _initializeScores();
-            _nameOfField = '小場';
-            _decideParent();
-          } else {
+          if (!_isValidPhase2Score()) {
+            UsefulModules.showConfirm(
+                context: context,
+                title: 'ちがうよ！',
+                body: '取り札の合計は0点、または88×3＝264点である必要があります。',
+                onlyOK: true);
             return;
           }
-        }
-      },
-    );
-  }
-
-  /// ラウンドのスコアをtotalに加える
-  void _addRoundScoreToTotal() {
-    setState(() {
-      _calcScoreOfYaku();
-      if (_isSouhachi()) {
-        for (int i = 0; i < _players.length; i++) {
-          _players[i].scoreOfRound[phaseNames[2]] = 0;
-        }
-      } else {
-        _calcScoreOfNoDekiyaku();
-      }
-
-      // 累計得点にその月の得点を足す
-      for (int i = 0; i < _players.length; i++) {
-        for (int j = 0; j < phaseNames.length; j++) {
-          _players[i].totalScore +=
-              _players[i].scoreOfRound[phaseNames[j]] * scoreMultiplier;
-        }
-      }
-    });
-  }
-
-  /// 手役、出来役のラウンドスコアを集計
-  void _calcScoreOfYaku() {
-    var tmpScoreOfTeyaku = [
-      _players[0].scoreOfRound[phaseNames[0]],
-      _players[1].scoreOfRound[phaseNames[0]],
-      _players[2].scoreOfRound[phaseNames[0]]
-    ];
-    var tmpScoreOfDekiyaku = [
-      _players[0].scoreOfRound[phaseNames[1]],
-      _players[1].scoreOfRound[phaseNames[1]],
-      _players[2].scoreOfRound[phaseNames[1]]
-    ];
-
-    if (_isSouhachi()) {
-      _calcSouhachi();
-    }
-
-    for (int i = 0; i < _players.length; i++) {
-      for (int j = 0; j < 2; j++) {
-        _players[i].scoreOfRound[phaseNames[j]] *= 2;
-      }
-    }
-    for (int i = 0; i < _players.length; i++) {
-      _players[i].scoreOfRound[phaseNames[0]] -=
-          (tmpScoreOfTeyaku[(i + 1) % 3] + tmpScoreOfTeyaku[(i + 2) % 3]);
-      _players[i].scoreOfRound[phaseNames[1]] -=
-          (tmpScoreOfDekiyaku[(i + 1) % 3] + tmpScoreOfDekiyaku[(i + 2) % 3]);
-    }
-  }
-
-  /// 出来役なしだけのラウンドスコアを集計
-  void _calcScoreOfNoDekiyaku() {
-    for (int i = 0; i < _players.length; i++) {
-      _players[i].scoreOfRound[phaseNames[2]] -= 88;
-    }
-  }
-
-  /// 総八のときの得点修正
-  void _calcSouhachi() {
-    _players[numberOfParent].scoreOfRound[phaseNames[1]] += 100;
-    for (int i = 1; i <= 2; i++) {
-      _players[(numberOfParent + i) % 2].scoreOfRound[phaseNames[1]] -= 50;
-    }
-  }
-
-  /// 月++
-  void _incrementMonth() {
-    setState(
-      () {
-        this._month++;
-        if (this._month > 12) {
-          this._month %= 12;
-        }
-      },
-    );
-  }
-
-  /// プレイヤーの得点初期化
-  void _initializeScores() {
-    setState(
-      () {
-        for (int i = 0; i < _players.length; i++) {
-          for (int j = 0; j < phaseNames.length; j++) {
-            _players[i].scoreOfRound[phaseNames[j]] = 0;
+          _round++;
+          if (_isAll88()) {
+            for (int i = 0; i < 3; i++) {
+              if (_players[i].parent) {
+                _players[i].phaseScore[1] += 50;
+                break;
+              }
+            }
+            _calcMonthScore(1);
+            _decideParent(1);
+          } else {
+            _calcMonthScore(phase);
+            _decideParent(phase);
           }
+          //totalに月の点数を加算
+          for (int i = 0; i < 3; i++) {
+            _players[i].totalScore += _players[i].monthScore;
+          }
+          _initializeScores();
+          _incrementMonth();
+          _fieldName = '小場';
+        } else {
+          return;
         }
       },
     );
   }
 
-  /// 2ラウンド目以降の親決め//1回目の親決めもここに組み込もう
-  /// 前ラウンドの出来役マンか「出来役なし」点の最強が親
-  void _decideParent() {
-    int max = 0, numOfMax;
-    for (int i = 0; i < _players.length; i++) {
-      //出来役がある場合
-      if (_players[i].scoreOfRound[phaseNames[1]] > 0) {
-        numberOfParent = i;
-        return;
-      } else {
-        if (max < _players[i].scoreOfRound[phaseNames[2]]) {
-          max = _players[i].scoreOfRound[phaseNames[2]];
-          numOfMax = i;
-        }
-      }
+  /// 出来役なしのスコア合計が0または88*3であることの確認
+  bool _isValidPhase2Score() {
+    int _sum = 0;
+    for (int i = 0; i < 3; i++) {
+      _sum += _players[i].phaseScore[2];
     }
-    numberOfParent = numOfMax;
-  }
-
-  /// 出来役があるかチェック
-  bool _doDekiyakuExist() {
-    int dekiyakuCnt = 0;
-    for (int i = 0; i < _players.length; i++) {
-      if (_players[i].scoreOfRound[phaseNames[1]] > 0) {
-        dekiyakuCnt++;
-      }
-    }
-    if (dekiyakuCnt > 0) {
+    if (_sum == 0 || _sum == 88 * 3) {
       return true;
     } else {
       return false;
     }
   }
 
-  /// 出来役なしの合計値の妥当性チェック
-  bool _isValidTotalOfRound() {
-    int sum = 0;
-    for (int i = 0; i < _players.length; i++) {
-      sum += _players[i].scoreOfRound[phaseNames[2]];
+  // 月の点数を計算する
+  void _calcMonthScore(int phase) {
+    // 手役の分の計算
+    var memoPhaseScore = List(3);
+    for (int i = 0; i < 3; i++) {
+      memoPhaseScore[i] = _players[i].phaseScore[0];
     }
-    if (_doDekiyakuExist()) {
-      if (sum != 0) {
-        UsefulModules.showConfirm(
-            context: context,
-            title: 'ちがうよ！',
-            body: '出来役がある場合、\n「出来役なし」タブの得点合計が0になる必要があります。',
-            onlyOK: true);
-        return false;
-      }
+    for (int i = 0; i < 3; i++) {
+      _players[i].monthScore += memoPhaseScore[i];
+      _players[i].monthScore -= memoPhaseScore[(i + 1) % 3];
+      _players[i].monthScore -= memoPhaseScore[(i + 2) % 3];
+    }
+    switch (phase) {
+      case 1: //出来役ありの場合
+        for (int i = 0; i < 3; i++) {
+          memoPhaseScore[i] = _players[i].phaseScore[1];
+        }
+        for (int i = 0; i < 3; i++) {
+          _players[i].monthScore += memoPhaseScore[i];
+          _players[i].monthScore -= memoPhaseScore[(i + 1) % 3];
+          _players[i].monthScore -= memoPhaseScore[(i + 2) % 3];
+        }
+        break;
+      case 2: //出来役なしの場合
+        for (int i = 0; i < 3; i++) {
+          _players[i].monthScore += _players[i].phaseScore[2] - 88;
+        }
+        break;
+    }
+  }
+
+  /// 月++
+  void _incrementMonth() {
+    setState(() {
+      _month++;
+      _month %= 12;
+    });
+  }
+
+  /// プレイヤーの得点初期化
+  void _initializeScores() {
+    setState(
+      () {
+        for (int i = 0; i < 3; i++) {
+          for (int j = 0; j < _players[i].phaseScore.length; j++) {
+            _players[i].phaseScore[j] = 0;
+          }
+        }
+      },
+    );
+  }
+
+  /// 親決め
+  void _decideParent(phase) {
+    if (_round == 1) {
+      var random = math.Random();
+      _players[random.nextInt(3)].parent = true;
     } else {
-      if (sum != 88 * 3) {
-        UsefulModules.showConfirm(
-            context: context,
-            title: 'ちがうよ！',
-            body: '出来役がない場合、\n「出来役なし」タブの得点合計は88×3＝264になる必要があります。',
-            onlyOK: true);
-        return false;
+      switch (phase) {
+        case 1: //出来役ありなら出来役の人が親
+          for (int i = 0; i < 3; i++) {
+            if (_players[i].phaseScore[1] > 0) {
+              _players[i].parent = true;
+              _players[(i + 1) % 3].parent = false;
+              _players[(i + 2) % 3].parent = false;
+              break;
+            }
+          }
+          break;
+        case 2: //出来役なしなら取り札が最高得点の人が親
+          int _max = 0, _maxPlayer;
+          for (int i = 0; i < 3; i++) {
+            if (_players[i].phaseScore[2] > _max) {
+              _max = _players[i].phaseScore[2];
+              _maxPlayer = i;
+            }
+          }
+          _players[_maxPlayer].parent = true;
+          _players[(_maxPlayer + 1) % 3].parent = false;
+          _players[(_maxPlayer + 2) % 3].parent = false;
       }
     }
-    return true;
   }
 
   /// 総八判定
-  bool _isSouhachi() {
-    int souhachiCnt = 0;
-    for (int i = 0; i < _players.length; i++) {
-      if (_players[i].scoreOfRound[phaseNames[2]] == 88) {
-        souhachiCnt++;
+  bool _isAll88() {
+    int _cnt = 0;
+    for (int i = 0; i < 3; i++) {
+      if (_players[i].phaseScore[2] == 88) {
+        _cnt++;
       }
     }
-    if (souhachiCnt == _players.length) {
+    if (_cnt == 3) {
       return true;
     } else {
       return false;
@@ -434,14 +441,13 @@ class HachihachiState extends State<HachihachiPage> {
 
   /// 月の表示
   _showMonth() {
-    return Container(
-        child: Text('${this._month}月', style: TextStyle(fontSize: 20.0)));
+    return Container(child: Text('$_month月', style: TextStyle(fontSize: 20.0)));
   }
 
   /// 場の選択肢表示
   _showFieldSelection() {
     return DropdownButton<String>(
-      value: _nameOfField,
+      value: _fieldName,
       icon: Icon(Icons.arrow_downward),
       iconSize: 24,
       elevation: 16,
@@ -452,35 +458,15 @@ class HachihachiState extends State<HachihachiPage> {
       ),
       onChanged: (String newValue) {
         setState(() {
-          _nameOfField = newValue;
-          switch (_nameOfField) {
-            case '小場':
-              {
-                scoreMultiplier = 1;
-              }
-              break;
-
-            case '大場':
-              {
-                scoreMultiplier = 2;
-              }
-              break;
-
-            case '絶場':
-              {
-                scoreMultiplier = 4;
-              }
-              break;
-
-            default:
-              {
-                scoreMultiplier = 1;
-              }
-              break;
+          _fieldName = newValue;
+          for (int i = 0; i < 3; i++) {
+            if (_fields[i].name == _fieldName) {
+              _scoreMagnification = _fields[i].scoreMagnification;
+            }
           }
         });
       },
-      items: <String>['小場', '大場', '絶場']
+      items: <String>[_fields[0].name, _fields[1].name, _fields[2].name]
           .map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(
           value: value,
@@ -490,90 +476,16 @@ class HachihachiState extends State<HachihachiPage> {
     );
   }
 
-//  _showFieldSelection() {
-//    return Container(
-//      child: Column(
-//        children: <Widget>[
-//          Flexible(
-//            fit: FlexFit.loose,
-//            child: RadioListTile(
-//                title: Text('小場'),
-//                groupValue: scoreMultiplier,
-//                activeColor: Colors.green,
-//                value: 1,
-//                dense: true,
-//                selected: true,
-//                onChanged: _handleScoreMultiplier),
-//          ),
-//          Flexible(
-//            fit: FlexFit.loose,
-//            child: RadioListTile(
-//                title: Text('大場'),
-//                groupValue: scoreMultiplier,
-//                activeColor: Colors.green,
-//                value: 2,
-//                dense: true,
-//                onChanged: _handleScoreMultiplier),
-//          ),
-//          Flexible(
-//            fit: FlexFit.loose,
-//            child: RadioListTile(
-//                title: Text('絶場'),
-//                groupValue: scoreMultiplier,
-//                activeColor: Colors.green,
-//                value: 4,
-//                dense: true,
-//                onChanged: _handleScoreMultiplier),
-//          ),
-//        ],
-//      ),
-//    );
-//  }
-
-//  _showFieldSelection() {
-//    return Container(
-//      child: Column(
-//        children: <Widget>[
-//          ListTile(
-//              title: const Text('小場'),
-//              leading: Radio(
-//                  groupValue: scoreMultiplier,
-//                  activeColor: Colors.green,
-//                  value: 1,
-//                  onChanged: _handleScoreMultiplier)),
-//          ListTile(
-//              title: const Text('大場'),
-//              leading: Radio(
-//                  groupValue: scoreMultiplier,
-//                  activeColor: Colors.green,
-//                  value: 2,
-//                  onChanged: _handleScoreMultiplier)),
-//          ListTile(
-//              title: const Text('絶場'),
-//              leading: Radio(
-//                  groupValue: scoreMultiplier,
-//                  activeColor: Colors.green,
-//                  value: 4,
-//                  onChanged: _handleScoreMultiplier)),
-//        ],
-//      ),
-//    );
-//  }
-
-//  void _handleScoreMultiplier(int num) => setState(() {
-//        scoreMultiplier = num;
-//      });
-
   /// 月の雑学の表示
   Future _showTriviaOfMonth() async {
     await showDialog(
       context: context,
-      builder: (BuildContext context) => new AlertDialog(
-        title: new Text('$_month月'),
+      builder: (BuildContext context) => AlertDialog(
+        title: Text('$_month月'),
         content: Padding(
           padding: EdgeInsets.all(0.0),
           child: SingleChildScrollView(
-              child: new Text(TriviaOfMonth.getTrivia(_month))),
+              child: Text(TriviaOfMonth.getTrivia(_month))),
         ),
         actions: <Widget>[
           FlatButton(
@@ -588,7 +500,7 @@ class HachihachiState extends State<HachihachiPage> {
   List<HachihachiPlayer> _decideWinner() {
     List<HachihachiPlayer> winners = [];
     int min = 0;
-    for (int i = 0; i < _players.length; i++) {
+    for (int i = 0; i < 3; i++) {
       if (min <= _players[i].totalScore) {
         if (min < _players[i].totalScore && winners.length != 0) {
           winners = [];
@@ -615,10 +527,10 @@ class HachihachiState extends State<HachihachiPage> {
 
     await showDialog(
       context: context,
-      builder: (BuildContext context) => new AlertDialog(
-        title: new Text('結果'),
+      builder: (BuildContext context) => AlertDialog(
+        title: Text('結果'),
         content: Center(
-          child: new Text(textOfScore + textOfResult),
+          child: Text(textOfScore + textOfResult),
         ),
         actions: <Widget>[
           FlatButton(

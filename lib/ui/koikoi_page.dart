@@ -7,20 +7,20 @@ import 'package:flutter_app/info/player.dart';
 
 class KoikoiPage extends StatefulWidget {
   @override
-  KoikoiState createState() => new KoikoiState();
+  KoikoiState createState() => KoikoiState();
 }
 
 class KoikoiState extends State<KoikoiPage> {
-  final String title = 'Scoring Koikoi';
+  final String _title = 'Scoring Koikoi';
   List<Player> _players = [Player('player1'), Player('player2')];
   int _month = 1;
 
   /// 全体のレイアウト
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-      appBar: new AppBar(
-        title: Text(title),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_title),
       ),
       body: Container(
         child: Column(
@@ -42,7 +42,7 @@ class KoikoiState extends State<KoikoiPage> {
   _showNameOfPlayer(int numOfPlayer) {
     return Container(
       width: 200.0,
-      child: new TextField(
+      child: TextField(
           textAlign: TextAlign.center,
           decoration: InputDecoration.collapsed(
             hintText: '${_players[numOfPlayer - 1].name}',
@@ -106,7 +106,7 @@ class KoikoiState extends State<KoikoiPage> {
   /// 得点の表示
   _showScoreOfPlayer(int numOfPlayer) {
     return Container(
-      child: new Text(
+      child: Text(
         _players[numOfPlayer - 1].monthScore.toString(),
         style: TextStyle(
           fontWeight: FontWeight.bold,
@@ -120,7 +120,7 @@ class KoikoiState extends State<KoikoiPage> {
   /// 累計得点の表示
   _showTotalScoreOfPlayer(int numOfPlayer) {
     return Container(
-      child: new Text('total: ${_players[numOfPlayer - 1].totalScore}',
+      child: Text('total: ${_players[numOfPlayer - 1].totalScore}',
           style: TextStyle(fontSize: 20)),
     );
   }
@@ -138,7 +138,7 @@ class KoikoiState extends State<KoikoiPage> {
   /// 月の表示
   _showMonth() {
     return Container(
-      child: new Text('$_month月', style: TextStyle(fontSize: 20)),
+      child: Text('$_month月', style: TextStyle(fontSize: 20)),
     );
   }
 
@@ -182,12 +182,12 @@ class KoikoiState extends State<KoikoiPage> {
   Future _showTriviaOfMonth() async {
     await showDialog(
       context: context,
-      builder: (BuildContext context) => new AlertDialog(
-        title: new Text('$_month月'),
+      builder: (BuildContext context) => AlertDialog(
+        title: Text('$_month月'),
         content: Padding(
           padding: EdgeInsets.all(0.0),
           child: SingleChildScrollView(
-              child: new Text(TriviaOfMonth.getTrivia(_month))),
+              child: Text(TriviaOfMonth.getTrivia(_month))),
         ),
         actions: <Widget>[
           FlatButton(
@@ -213,12 +213,12 @@ class KoikoiState extends State<KoikoiPage> {
     }
     await showDialog(
       context: context,
-      builder: (BuildContext context) => new AlertDialog(
-        title: new Text('結果'),
+      builder: (BuildContext context) => AlertDialog(
+        title: Text('結果'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            new Text(textOfScore + textOfResult),
+            Text(textOfScore + textOfResult),
           ],
         ),
         actions: <Widget>[
@@ -257,15 +257,15 @@ class KoikoiState extends State<KoikoiPage> {
       children: <Widget>[
         RaisedButton(
           onPressed: _goToNextRound,
-          child: new Text('再戦'),
+          child: Text('再戦'),
         ),
         RaisedButton(
           onPressed: _showTriviaOfMonth,
-          child: new Text('$_month月といえば'),
+          child: Text('$_month月といえば'),
         ),
         RaisedButton(
           onPressed: _finishGame,
-          child: new Text('終了'),
+          child: Text('終了'),
         ),
       ],
     );

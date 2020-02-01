@@ -3,19 +3,19 @@ import 'package:flutter/material.dart';
 class UsefulModules {
   /// 確認画面表示
   /// onlyOK: trueの場合、ボタンをOKのみにする。デフォルトはCancelも表示される。
-  static Future showConfirm(
+  static showConfirm(
       {BuildContext context,
       String title,
       String body,
       bool onlyOK = false}) async {
     if (onlyOK == false) {
-      bool result = await showDialog<bool>(
+      return await showDialog<bool>(
         context: context,
-        builder: (BuildContext context) => new AlertDialog(
+        builder: (BuildContext context) => AlertDialog(
           title: Text(title),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: <Widget>[new Text(body)],
+            children: <Widget>[Text(body)],
           ),
           actions: <Widget>[
             FlatButton(
@@ -29,15 +29,14 @@ class UsefulModules {
           ],
         ),
       );
-      return result;
     } else {
-      bool result = await showDialog<bool>(
+      return await showDialog<bool>(
         context: context,
-        builder: (BuildContext context) => new AlertDialog(
+        builder: (BuildContext context) => AlertDialog(
           title: Text(title),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: <Widget>[new Text(body)],
+            children: <Widget>[Text(body)],
           ),
           actions: <Widget>[
             FlatButton(
@@ -47,7 +46,6 @@ class UsefulModules {
           ],
         ),
       );
-      return result;
     }
   }
 }
