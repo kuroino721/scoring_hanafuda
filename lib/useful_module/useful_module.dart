@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class UsefulModules {
   /// 確認画面表示
   /// onlyOK: trueの場合、ボタンをOKのみにする。デフォルトはCancelも表示される。
-  static showConfirm(
+  static Future showConfirm(
       {BuildContext context,
       String title,
       String body,
